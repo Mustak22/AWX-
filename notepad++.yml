@@ -1,0 +1,12 @@
+---
+- name: Install Notepad++ on localhost
+  hosts: localhost
+  gather_facts: yes
+  tasks:
+    - name: Ensure Chocolatey is installed
+      win_chocolatey_facts:
+
+    - name: Install Notepad++
+      win_chocolatey:
+        name: notepadplusplus
+        state: present
