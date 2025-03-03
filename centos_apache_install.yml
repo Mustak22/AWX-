@@ -1,0 +1,45 @@
+---
+- name: Install and Configure Apache in HA setup
+  hosts: web_servers  # This refers to the group of servers in your Ansible inventory (web_servers)
+  become: yes         # Run commands as sudo (root)
+  tasks:
+    - name: Install Apache (httpd) on CentOS
+      yum:
+        name: httpd
+        state: present
+      notify:
+        - Start Apache
+
+    - name: Enable Apache service to start on boot
+      systemd:
+        name: httpd
+        enabled: yes
+        state: started
+
+    - name: Create a custom index.html file (simple page)
+      copy:
+        content: "<h1>Apache Web Server on {{ inventory_hostname }}</h1>"
+        dest: /var/www/html/index.html
+        mode: '0644'
+
+    - name: Configure firewall to allow HTTP (port 80) and HTTPS (port 443)
+      firewalld:
+        service: "{{ item }}"
+        permanent: yes
+        state: enabled
+      with_items:
+        - http
+        - https
+      notify:
+        - Reload firewall
+
+  handlers:
+    - name: Start Apache
+      systemd:
+        name: httpd
+        state: started
+
+    - name: Reload firewall
+      firewalld:
+        state: reloaded
+        permanent: yes
