@@ -1,0 +1,17 @@
+---
+- name: Install Git on CentOS
+  hosts: all
+  remote_user: centos
+  become: true  # Use sudo to run tasks as root
+  tasks:
+    - name: Install Git
+      dnf:
+        name: git
+        state: present  # Install Git if not already installed
+
+    - name: Verify Git installation
+      command: git --version
+      register: git_version
+
+    - debug:
+        msg: "Git version is: {{ git_version.stdout }}"
