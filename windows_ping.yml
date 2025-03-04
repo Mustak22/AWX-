@@ -1,6 +1,6 @@
 ---
 - name: Install Notepad++ on Windows
-  hosts: 192.168.33.72  # Directly specify the host IP
+  hosts: 192.168.33.55  # Directly specify the host IP
   tasks:
     - name: Install Notepad++ via Chocolatey
       win_chocolatey:
