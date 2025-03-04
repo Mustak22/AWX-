@@ -1,6 +1,7 @@
 ---
 - name: Install and Configure Apache in HA setup
-  hosts: web_servers  # This refers to the group of servers in your Ansible inventory (web_servers)
+  hosts: all  # This refers to the group of servers in your Ansible inventory (web_servers)
+  remote_user: centos
   become: yes         # Run commands as sudo (root)
   tasks:
     - name: Install Apache (httpd) on CentOS
