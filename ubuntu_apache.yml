@@ -1,7 +1,6 @@
----
 - name: Install Apache Web Server
-  hosts: all
-  become: yes
+  hosts: all  # This targets all hosts in the inventory
+  become: yes  # This allows the playbook to run tasks with escalated privileges (e.g., sudo)
   tasks:
     - name: Update apt cache
       apt:
