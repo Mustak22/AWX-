@@ -1,0 +1,47 @@
+---
+- name: Install Apache Web Server on Ubuntu
+  hosts: all
+  become: true
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Apache2
+      apt:
+        name: apache2
+        state: present
+
+    - name: Enable and start the Apache2 service
+      systemd:
+        name: apache2
+        enabled: yes
+        state: started
+
+    - name: Allow Apache through the firewall (UFW)
+      ufw:
+        rule: allow
+        name: 'Apache Full'
+
+    - name: Ensure the Apache service is running
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Ensure default Apache web page is present
+      copy:
+        dest: /var/www/html/index.html
+        content: |
+          <html>
+            <head><title>Welcome to Apache!</title></head>
+            <body><h1>Apache2 is working!</h1></body>
+          </html>
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Restart Apache to ensure changes take effect
+      systemd:
+        name: apache2
+        state: restarted
