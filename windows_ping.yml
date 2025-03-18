@@ -1,8 +1,6 @@
----
-- name: Install Notepad++ on Windows
-  hosts: 192.168.33.55  # Directly specify the host IP
+- name: Test Windows connectivity
+  hosts: windows
+  gather_facts: no
   tasks:
-    - name: Install Notepad++ via Chocolatey
-      win_chocolatey:
-        name: notepadplusplus
-        state: present
+    - name: Ping Windows machines
+      ansible.windows.win_ping:
