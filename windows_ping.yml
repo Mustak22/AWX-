@@ -1,6 +1,9 @@
-- name: Test Windows connectivity
-  hosts: windows
-  gather_facts: no
-  tasks:
-    - name: Ping Windows machines
-      ansible.windows.win_ping:
+[windows]
+192.168.36.165
+
+[windows:vars]
+ansible_user=girmiti
+ansible_password=Girmiti@01
+ansible_connection=winrm
+ansible_winrm_transport=basic
+ansible_port=5985
