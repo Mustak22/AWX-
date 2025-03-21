@@ -1,9 +1,7 @@
-[windows]
-192.168.36.165
-
-[windows:vars]
-ansible_user=girmiti
-ansible_password=Girmiti@01
-ansible_connection=winrm
-ansible_winrm_transport=basic
-ansible_port=5985
+---
+- name: Test Windows Connectivity
+  hosts: windows
+  gather_facts: no
+  tasks:
+    - name: Ping Windows machines
+      win_ping:
