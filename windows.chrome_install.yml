@@ -1,6 +1,6 @@
 ---
 - name: Install Google Chrome on Windows
-  hosts: 192.168.33.55
+  hosts: all
   gather_facts: yes
   tasks:
     - name: Install Google Chrome via Chocolatey
