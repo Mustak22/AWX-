@@ -1,19 +1,18 @@
 ---
 - name: Install Notepad++ on Windows
-  hosts: windows
+  hosts: all
   gather_facts: no
   tasks:
     - name: Install Chocolatey
-      win_command: |
+      win_shell: |
         Set-ExecutionPolicy Bypass -Scope Process -Force;
-        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;
         iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-      become: yes  # Requires administrative privileges to install Chocolatey
-    
-    - name: Ensure Chocolatey is installed
-      win_chocolatey_facts:
+      args:
+        creates: C:\ProgramData\chocolatey\bin\choco.exe
 
-    - name: Install Notepad++
+    - name: Install Notepad++ using Chocolatey
       win_chocolatey:
         name: notepadplusplus
         state: present
+
