@@ -1,7 +1,7 @@
 ---
 - name: Join Windows host to Active Directory
   hosts: windows
-  gather_facts: no
+  gather_facts: false
   vars:
     domain_name: "girmiti.in"
     domain_admin_user: "GIRMITI\\join"
@@ -13,8 +13,8 @@
       ansible.windows.win_dns_client:
         adapter_names: '*'
         ipv4_addresses:
-          - "192.168.0.1"   # <- Replace with your AD/DNS server
-
+          - "192.168.0.1"  # Replace with actual DNS server IP (e.g. AD server)
+      
     - name: Join domain
       ansible.windows.win_domain_membership:
         dns_domain_name: "{{ domain_name }}"
@@ -25,6 +25,6 @@
 
     - name: Reboot if domain join required it
       ansible.windows.win_reboot:
-        msg: "Rebooting after domain join"
+        msg: "Rebooting after joining AD domain"
         timeout: 300
       when: domain_join.reboot_required
