@@ -1,7 +1,6 @@
 ---
 - name: Test Windows Connectivity
-  hosts: windows
-  gather_facts: no
+  hosts: all
   tasks:
-    - name: Ping Windows machines
+    - name: Ping the Windows host
       win_ping:
