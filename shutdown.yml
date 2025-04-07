@@ -1,9 +1,0 @@
----
-- name: Shutdown all servers
-  hosts: all  # This can be adjusted based on your inventory group
-  become: yes  # This will run the commands as root/superuser
-  tasks:
-    - name: Shutdown the system
-      command: /sbin/shutdown -h now
-      async: 1
-      poll: 0
