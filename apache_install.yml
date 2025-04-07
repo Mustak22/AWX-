@@ -1,23 +1,30 @@
 ---
-- name: Install Apache HTTP Server
-  hosts: all
-  become: yes
+- name: Join Windows host to Active Directory
+  hosts: windows
+  gather_facts: no
+  vars:
+    domain_name: "girmiti.in"
+    domain_admin_user: "GIRMITI\\join"
+    domain_admin_password: "P@ssw0rD!"
+
   tasks:
-    - name: Install Apache (httpd)
-      package:
-        name: apache2  # For Debian/Ubuntu
-        # name: httpd   # For RHEL/CentOS/Fedora
-        state: present
 
-    - name: Start Apache service
-      service:
-        name: apache2   # For Debian/Ubuntu
-        # name: httpd   # For RHEL/CentOS/Fedora
-        state: started
-        enabled: yes
+    - name: Set DNS server for domain discovery (optional)
+      ansible.windows.win_dns_client:
+        adapter_names: '*'
+        ipv4_addresses:
+          - "192.168.0.1"   # <- Replace with your AD/DNS server
 
-    - name: Ensure Apache is running
-      service:
-        name: apache2   # For Debian/Ubuntu
-        # name: httpd   # For RHEL/CentOS/Fedora
-        state: started
+    - name: Join domain
+      ansible.windows.win_domain_membership:
+        dns_domain_name: "{{ domain_name }}"
+        domain_admin_user: "{{ domain_admin_user }}"
+        domain_admin_password: "{{ domain_admin_password }}"
+        state: domain
+      register: domain_join
+
+    - name: Reboot if domain join required it
+      ansible.windows.win_reboot:
+        msg: "Rebooting after domain join"
+        timeout: 300
+      when: domain_join.reboot_required
