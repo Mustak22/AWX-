@@ -30,5 +30,5 @@
     - name: Reboot if required
       win_reboot:
         msg: "Rebooting after AD domain join"
-        timeout: 300
       when: domain_join.reboot_required
+
