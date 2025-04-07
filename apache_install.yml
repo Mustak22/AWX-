@@ -6,7 +6,7 @@
     domain_name: "girmiti.in"
     domain_admin_user: "GIRMITI\\join"
     domain_admin_password: "P@ssw0rD!"
-    preferred_dns: "192.168.0.7"  # Replace with your AD DNS IP
+    preferred_dns: "192.168.0.7"
 
   tasks:
 
