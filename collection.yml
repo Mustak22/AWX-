@@ -1,13 +1,7 @@
 ---
-- name: Install ansible.windows collection
-  hosts: localhost
-  gather_facts: no
+- name: Shutdown all servers
+  hosts: all
+  become: yes
   tasks:
-    - name: Check if ansible.windows collection is installed
-      command: ansible-galaxy collection list ansible.windows
-      register: result
-      ignore_errors: true
-
-    - name: Install ansible.windows collection if not installed
-      command: ansible-galaxy collection install ansible.windows
-      when: result.rc != 0
+    - name: Shutdown the server
+      ansible.builtin.command: shutdown -h now
