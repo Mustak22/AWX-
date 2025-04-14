@@ -1,7 +1,15 @@
----
-- name: Ping all Windows machines
-  hosts: windows
+- name: Install Postman on Windows
+  hosts: all
   gather_facts: no
+  vars:
+    postman_package: postman
   tasks:
-    - name: Ping Windows machines
-      ansible.windows.win_ping:
+
+    - name: Ensure Chocolatey is installed
+      win_command: |
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))"
+      args:
+        creates: C:\ProgramData\chocolatey\bin\choco.exe
+
+    - name: Install Postman using Chocolatey
+      win_command: choco install {{ postman_package }} -y
