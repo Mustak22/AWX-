@@ -1,0 +1,8 @@
+- name: Uninstall Postman from Windows
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Uninstall Postman using Chocolatey
+      win_chocolatey:
+        name: postman
+        state: absent
