@@ -1,0 +1,13 @@
+- name: Show monitoring message on Windows for 10 seconds
+  hosts: all
+  gather_facts: no
+  vars:
+    message: "I am Monitoring..."
+  tasks:
+    - name: Show monitoring message every second for 10 seconds
+      win_command: |
+        powershell -Command "
+        for ($i = 1; $i -le 10; $i++) {
+            Write-Output '{{ message }} - $i'
+            Start-Sleep -Seconds 1
+        }"
