@@ -1,6 +1,5 @@
----
-- name: Test Windows Connectivity
+- name: Test ping over SSH
   hosts: all
   tasks:
-    - name: Ping the Windows host
-      win_ping:
+    - name: Ping Windows host over SSH
+      ping:
