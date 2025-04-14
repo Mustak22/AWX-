@@ -1,7 +1,6 @@
-- name: Test ping over SSH
+- name: Test raw command over SSH
   hosts: all
   gather_facts: no
   tasks:
-    - name: Ping Windows host over SSH
-      ping:
-
+    - name: Run raw command
+      raw: echo Connection success from Ansible
