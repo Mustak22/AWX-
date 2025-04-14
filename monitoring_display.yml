@@ -1,13 +1,12 @@
-- name: Show monitoring message on Windows for 10 seconds
+- name: Show pop-up message on Windows for 10 seconds
   hosts: all
   gather_facts: no
-  vars:
-    message: "I am Monitoring..."
   tasks:
-    - name: Show monitoring message every second for 10 seconds
-      win_command: |
-        powershell -Command "
+    - name: Show pop-up message every second
+      win_command: >
+        powershell -WindowStyle Hidden -Command "
+        Add-Type -AssemblyName PresentationFramework;
         for ($i = 1; $i -le 10; $i++) {
-            Write-Output '{{ message }} - $i'
+            [System.Windows.MessageBox]::Show('I am Monitoring... #'+$i);
             Start-Sleep -Seconds 1
         }"
