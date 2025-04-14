@@ -1,16 +1,27 @@
-- name: Show auto-closing popup using PowerShell
+- name: Show auto-closing popup using PowerShell (fixed)
   hosts: all
   gather_facts: no
   tasks:
-    - name: Show auto-closing popup
+    - name: Show non-blocking popup for 10 seconds
       win_shell: |
         powershell -WindowStyle Hidden -Command "
         Add-Type -AssemblyName PresentationFramework;
-        $window = New-Object Windows.Window;
-        $window.Content = '🔍 I am Monitoring...';
-        $window.Width = 300;
-        $window.Height = 100;
+        $window = New-Object System.Windows.Window;
+        $label = New-Object System.Windows.Controls.Label;
+        $label.Content = '🔍 I am Monitoring...';
+        $label.FontSize = 20;
+        $label.HorizontalContentAlignment = 'Center';
+        $label.VerticalContentAlignment = 'Center';
+        $window.Content = $label;
+        $window.Width = 400;
+        $window.Height = 200;
         $window.Topmost = $true;
-        $window.Show();
-        Start-Sleep -Seconds 10;
-        $window.Close();"
+        $window.WindowStartupLocation = 'CenterScreen';
+
+        $timer = New-Object System.Timers.Timer;
+        $timer.Interval = 10000;
+        $timer.AutoReset = $false;
+        $timer.add_Elapsed({ $window.Dispatcher.Invoke([action]{ $window.Close() }) });
+        $timer.Start();
+
+        $window.ShowDialog();"
