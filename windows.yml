@@ -2,14 +2,16 @@
   hosts: all
   gather_facts: no
   vars:
+    choco_path: C:\ProgramData\chocolatey\bin\choco.exe
     postman_package: postman
+
   tasks:
 
-    - name: Ensure Chocolatey is installed
+    - name: Install Chocolatey (if not present)
       win_command: |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (!(Test-Path 'C:\ProgramData\chocolatey\bin\choco.exe')) { iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')) }"
       args:
-        creates: C:\ProgramData\chocolatey\bin\choco.exe
+        creates: "{{ choco_path }}"
 
     - name: Install Postman using Chocolatey
-      win_command: choco install {{ postman_package }} -y
+      win_command: "{{ choco_path }} install {{ postman_package }} -y"
