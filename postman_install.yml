@@ -31,12 +31,24 @@
         dest: "{{ postman_install_path }}"
         remote_src: yes
 
+    - name: Ensure Postman.exe exists
+      win_stat:
+        path: "{{ postman_exe_path }}"
+      register: postman_stat
+
     - name: Create Postman shortcut on public desktop
       win_shortcut:
         src: "{{ postman_exe_path }}"
         dest: "{{ shortcut_path }}"
+      when: postman_stat.stat.exists
 
     - name: Cleanup downloaded zip
       win_file:
         path: "{{ postman_zip_path }}"
         state: absent
+    - name: Add Postman to system PATH
+      win_environment:
+        name: Path
+        state: present
+        value: "{{ postman_install_path }}"
+        level: machine
