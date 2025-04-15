@@ -1,4 +1,4 @@
-- name: Install Postman on Windows and show on Desktop for All Users
+- name: Install Postman and move shortcut to logged-in user's desktop
   hosts: all
   gather_facts: no
   vars:
@@ -16,7 +16,7 @@
     - name: Install Postman using Chocolatey
       win_command: "{{ choco_path }} install {{ postman_package }} -y"
 
-    - name: Search for Postman.exe (in common locations)
+    - name: Find Postman.exe
       win_find:
         paths:
           - 'C:\Users'
@@ -25,13 +25,16 @@
         patterns: 'Postman.exe'
       register: postman_files
 
-    - name: Debug Postman path found (optional)
-      debug:
-        msg: "{{ postman_files.files[0].path }}"
-      when: postman_files.matched > 0
+    - name: Get currently logged-in user
+      win_command: powershell -Command "(Get-WmiObject -Class Win32_ComputerSystem).UserName"
+      register: loggedin_user_raw
 
-    - name: Create shortcut on Public Desktop (if Postman found)
+    - name: Extract username
+      set_fact:
+        current_user: "{{ loggedin_user_raw.stdout.split('\\')[-1] }}"
+
+    - name: Create shortcut on logged-in user’s desktop
       win_shortcut:
         src: "{{ postman_files.files[0].path }}"
-        dest: 'C:\Users\Public\Desktop\Postman.lnk'
+        dest: "C:\\Users\\{{ current_user }}\\Desktop\\Postman.lnk"
       when: postman_files.matched > 0
