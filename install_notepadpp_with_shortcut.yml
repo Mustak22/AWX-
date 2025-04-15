@@ -1,0 +1,43 @@
+- name: Install Notepad++ and place shortcut on all desktops
+  hosts: all
+  gather_facts: no
+  vars:
+    installer_url: "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.6.4/npp.8.6.4.Installer.x64.exe"
+    installer_path: "C:\\Temp\\npp_installer.exe"
+    install_dir: "C:\\Program Files\\Notepad++"
+    exe_path: "C:\\Program Files\\Notepad++\\notepad++.exe"
+    shortcut_admin: "C:\\Users\\Administrator\\Desktop\\Notepad++.lnk"
+    shortcut_public: "C:\\Users\\Public\\Desktop\\Notepad++.lnk"
+
+  tasks:
+    - name: Ensure Temp directory exists
+      win_file:
+        path: "C:\\Temp"
+        state: directory
+
+    - name: Download Notepad++ installer
+      win_get_url:
+        url: "{{ installer_url }}"
+        dest: "{{ installer_path }}"
+
+    - name: Install Notepad++ silently
+      win_package:
+        path: "{{ installer_path }}"
+        arguments: /S
+        product_name: "Notepad++ (64-bit x64)"
+        state: present
+
+    - name: Create shortcut on Administrator desktop
+      win_shortcut:
+        src: "{{ exe_path }}"
+        dest: "{{ shortcut_admin }}"
+
+    - name: Copy shortcut to Public desktop (visible to all users)
+      win_copy:
+        src: "{{ shortcut_admin }}"
+        dest: "{{ shortcut_public }}"
+
+    - name: Cleanup installer
+      win_file:
+        path: "{{ installer_path }}"
+        state: absent
