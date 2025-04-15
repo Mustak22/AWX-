@@ -4,7 +4,6 @@
   vars:
     installer_url: "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.6.4/npp.8.6.4.Installer.x64.exe"
     installer_path: "C:\\Temp\\npp_installer.exe"
-    install_dir: "C:\\Program Files\\Notepad++"
     exe_path: "C:\\Program Files\\Notepad++\\notepad++.exe"
     shortcut_admin: "C:\\Users\\Administrator\\Desktop\\Notepad++.lnk"
     shortcut_public: "C:\\Users\\Public\\Desktop\\Notepad++.lnk"
@@ -20,12 +19,10 @@
         url: "{{ installer_url }}"
         dest: "{{ installer_path }}"
 
-    - name: Install Notepad++ silently
-      win_package:
-        path: "{{ installer_path }}"
-        arguments: /S
-        product_name: "Notepad++ (64-bit x64)"
-        state: present
+    - name: Install Notepad++ silently using win_command
+      win_command: "{{ installer_path }} /S"
+      args:
+        chdir: "C:\\Temp"
 
     - name: Create shortcut on Administrator desktop
       win_shortcut:
