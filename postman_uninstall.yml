@@ -1,8 +1,43 @@
-- name: Uninstall Postman from Windows
+- name: Uninstall Postman from all possible locations
   hosts: all
   gather_facts: no
+  vars:
+    choco_path: C:\ProgramData\chocolatey\bin\choco.exe
+    postman_programfiles_path: C:\Program Files\Postman
+    postman_localappdata_path: C:\Users\Administrator\AppData\Local\Postman
+    postman_shortcut_public: C:\Users\Public\Desktop\Postman.lnk
+    postman_shortcut_admin: C:\Users\Administrator\Desktop\Postman.lnk
+    postman_zip_path: C:\Temp\Postman-win64.zip
+
   tasks:
-    - name: Uninstall Postman using Chocolatey
-      win_chocolatey:
-        name: postman
+
+    - name: Uninstall Postman via Chocolatey (if installed)
+      win_command: "{{ choco_path }} uninstall postman -y"
+      register: choco_result
+      ignore_errors: yes
+      when: choco_path is exists
+
+    - name: Remove Postman from Program Files
+      win_file:
+        path: "{{ postman_programfiles_path }}"
+        state: absent
+
+    - name: Remove Postman from LocalAppData (Administrator)
+      win_file:
+        path: "{{ postman_localappdata_path }}"
+        state: absent
+
+    - name: Remove Postman shortcut from Public Desktop
+      win_file:
+        path: "{{ postman_shortcut_public }}"
+        state: absent
+
+    - name: Remove Postman shortcut from Administrator Desktop
+      win_file:
+        path: "{{ postman_shortcut_admin }}"
+        state: absent
+
+    - name: Remove leftover ZIP installer if present
+      win_file:
+        path: "{{ postman_zip_path }}"
         state: absent
