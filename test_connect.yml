@@ -1,0 +1,15 @@
+- name: Test connectivity to Windows host over SSH with PowerShell shell
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Run a basic command
+      win_command: "hostname"
+
+    - name: Check if Postman exists
+      win_stat:
+        path: "C:\\Program Files\\Postman\\Postman.exe"
+      register: postman_check
+
+    - name: Debug result
+      debug:
+        var: postman_check.stat.exists
