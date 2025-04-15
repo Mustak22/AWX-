@@ -1,0 +1,51 @@
+- name: Uninstall Notepad++ if installed
+  hosts: all
+  gather_facts: no
+  vars:
+    npp_display_name: "Notepad++ (64-bit x64)"
+    npp_uninstall_key: "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+    npp_uninstall_key_wow: "HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+
+  tasks:
+
+    - name: Check if Notepad++ is installed (64-bit)
+      win_reg_stat:
+        path: "{{ npp_uninstall_key }}\\{{ item }}"
+      loop: "{{ query('win_registry', npp_uninstall_key) }}"
+      register: reg_64
+      when: item.startswith("Notepad++")
+      ignore_errors: true
+
+    - name: Check if Notepad++ is installed (32-bit)
+      win_reg_stat:
+        path: "{{ npp_uninstall_key_wow }}\\{{ item }}"
+      loop: "{{ query('win_registry', npp_uninstall_key_wow) }}"
+      register: reg_32
+      when: item.startswith("Notepad++")
+      ignore_errors: true
+
+    - name: Get uninstall string from registry (64-bit)
+      win_regedit:
+        path: "{{ item.key }}"
+        name: "UninstallString"
+      register: uninstall_string_64
+      with_items: "{{ reg_64.results | selectattr('exists', 'equalto', true) | list }}"
+      when: reg_64.results is defined
+
+    - name: Get uninstall string from registry (32-bit)
+      win_regedit:
+        path: "{{ item.key }}"
+        name: "UninstallString"
+      register: uninstall_string_32
+      with_items: "{{ reg_32.results | selectattr('exists', 'equalto', true) | list }}"
+      when: reg_32.results is defined
+
+    - name: Uninstall Notepad++ (64-bit)
+      win_command: '{{ item.value }} /S'
+      with_items: "{{ uninstall_string_64.results }}"
+      when: uninstall_string_64.results is defined
+
+    - name: Uninstall Notepad++ (32-bit)
+      win_command: '{{ item.value }} /S'
+      with_items: "{{ uninstall_string_32.results }}"
+      when: uninstall_string_32.results is defined
