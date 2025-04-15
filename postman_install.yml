@@ -1,4 +1,4 @@
-- name: Install Postman on Windows
+- name: Install Postman on Windows and show on Desktop for All Users
   hosts: all
   gather_facts: no
   vars:
@@ -9,15 +9,29 @@
 
     - name: Install Chocolatey (if not present)
       win_command: |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (!(Test-Path 'C:\ProgramData\chocolatey\bin\choco.exe')) { iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')) }"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (!(Test-Path '{{ choco_path }}')) { iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')) }"
       args:
         creates: "{{ choco_path }}"
 
     - name: Install Postman using Chocolatey
       win_command: "{{ choco_path }} install {{ postman_package }} -y"
 
-    - name: Ensure shortcut exists for all users
+    - name: Search for Postman.exe (in common locations)
+      win_find:
+        paths:
+          - 'C:\Users'
+          - 'C:\Program Files'
+          - 'C:\Program Files (x86)'
+        patterns: 'Postman.exe'
+      register: postman_files
+
+    - name: Debug Postman path found (optional)
+      debug:
+        msg: "{{ postman_files.files[0].path }}"
+      when: postman_files.matched > 0
+
+    - name: Create shortcut on Public Desktop (if Postman found)
       win_shortcut:
-        src: 'C:\Users\{{ ansible_user }}\AppData\Local\Postman\Postman.exe'
+        src: "{{ postman_files.files[0].path }}"
         dest: 'C:\Users\Public\Desktop\Postman.lnk'
-      ignore_errors: yes
+      when: postman_files.matched > 0
