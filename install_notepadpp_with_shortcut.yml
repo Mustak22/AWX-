@@ -33,6 +33,7 @@
       win_copy:
         src: "{{ shortcut_admin }}"
         dest: "{{ shortcut_public }}"
+        remote_src: true
 
     - name: Cleanup installer
       win_file:
