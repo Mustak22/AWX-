@@ -1,45 +1,42 @@
-- name: Install Postman and move shortcut to logged-in user's desktop
+- name: Install Postman system-wide and make available to all users
   hosts: all
   gather_facts: no
   vars:
-    choco_path: C:\ProgramData\chocolatey\bin\choco.exe
-    postman_package: postman
-    postman_exe_path: C:\Users\Administrator\AppData\Local\Postman\Postman.exe
-    shortcut_src: C:\Users\Administrator\Desktop\Postman.lnk
+    postman_download_url: https://dl.pstmn.io/download/latest/win64
+    postman_zip_path: C:\Temp\Postman-win64.zip
+    postman_install_path: C:\Program Files\Postman
+    postman_exe_path: C:\Program Files\Postman\Postman.exe
+    shortcut_path: C:\Users\Public\Desktop\Postman.lnk
 
   tasks:
 
-    - name: Install Chocolatey (if not present)
-      win_command: |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (!(Test-Path '{{ choco_path }}')) { iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')) }"
-      args:
-        creates: "{{ choco_path }}"
+    - name: Create temp directory
+      win_file:
+        path: C:\Temp
+        state: directory
 
-    - name: Install Postman using Chocolatey
-      win_command: "{{ choco_path }} install {{ postman_package }} -y"
+    - name: Download Postman ZIP
+      win_get_url:
+        url: "{{ postman_download_url }}"
+        dest: "{{ postman_zip_path }}"
 
-    - name: Wait for Postman installation to complete
-      pause:
-        seconds: 10
+    - name: Create install directory
+      win_file:
+        path: "{{ postman_install_path }}"
+        state: directory
 
-    - name: Find Postman.exe
-      win_find:
-        paths: C:\Users\Administrator\AppData\Local\Postman\
-        patterns: Postman.exe
-      register: postman_check
+    - name: Unzip Postman to Program Files
+      win_unzip:
+        src: "{{ postman_zip_path }}"
+        dest: "{{ postman_install_path }}"
+        remote_src: yes
 
-    - name: Get currently logged-in user (DOMAIN\username)
-      win_shell: |
-        (Get-CimInstance -ClassName Win32_ComputerSystem).UserName
-      register: loggedin_user_raw
+    - name: Create Postman shortcut on public desktop
+      win_shortcut:
+        src: "{{ postman_exe_path }}"
+        dest: "{{ shortcut_path }}"
 
-    - name: Extract only username part (after \)
-      set_fact:
-        current_user: "{{ loggedin_user_raw.stdout | regex_replace('.*\\\\', '') | trim }}"
-
-    - name: Move shortcut to currently logged-in user's Desktop
-      win_command: |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "Move-Item -Path '{{ shortcut_src }}' -Destination 'C:\Users\{{ current_user }}\Desktop\' -Force"
-      args:
-        removes: "{{ shortcut_src }}"
-      when: postman_check.matched > 0
+    - name: Cleanup downloaded zip
+      win_file:
+        path: "{{ postman_zip_path }}"
+        state: absent
