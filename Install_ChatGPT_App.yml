@@ -2,39 +2,29 @@
   hosts: all
   gather_facts: no
   vars:
-    chatgpt_installer_url: https://github.com/openai/chatgpt-desktop/releases/latest/download/ChatGPT_Installer_x64.exe
-    installer_path: C:\Temp\ChatGPT_Installer_x64.exe
-    shortcut_path: C:\Users\Public\Desktop\ChatGPT.lnk
-    exe_path: 'C:\Users\{{ ansible_user }}\AppData\Local\Programs\chatgpt\ChatGPT.exe'
+    chatgpt_download_url: "https://aka.ms/windowsdesktopchatgpt"
+    chatgpt_installer_path: "C:\\Temp\\ChatGPTSetup.exe"
 
   tasks:
 
-    - name: Create Temp directory
+    - name: Ensure Temp directory exists
       win_file:
-        path: C:\Temp
+        path: "C:\\Temp"
         state: directory
 
     - name: Download ChatGPT installer
       win_get_url:
-        url: "{{ chatgpt_installer_url }}"
-        dest: "{{ installer_path }}"
+        url: "{{ chatgpt_download_url }}"
+        dest: "{{ chatgpt_installer_path }}"
 
-    - name: Run ChatGPT installer silently
-      win_command: "{{ installer_path }} /S"
-      args:
-        creates: "{{ exe_path }}"
+    - name: Install ChatGPT silently
+      win_package:
+        path: "{{ chatgpt_installer_path }}"
+        arguments: "/quiet"
+        product_id: ""  # leave blank, silent install handles this
+        state: present
 
-    - name: Wait for installation to complete
-      win_wait_for:
-        path: "{{ exe_path }}"
-        timeout: 60
-
-    - name: Create ChatGPT shortcut on public desktop
-      win_shortcut:
-        src: "{{ exe_path }}"
-        dest: "{{ shortcut_path }}"
-
-    - name: Cleanup installer
+    - name: Remove installer after installation
       win_file:
-        path: "{{ installer_path }}"
+        path: "{{ chatgpt_installer_path }}"
         state: absent
