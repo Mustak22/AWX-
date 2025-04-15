@@ -15,3 +15,9 @@
 
     - name: Install Postman using Chocolatey
       win_command: "{{ choco_path }} install {{ postman_package }} -y"
+
+    - name: Ensure shortcut exists for all users
+      win_shortcut:
+        src: 'C:\Users\{{ ansible_user }}\AppData\Local\Postman\Postman.exe'
+        dest: 'C:\Users\Public\Desktop\Postman.lnk'
+      ignore_errors: yes
