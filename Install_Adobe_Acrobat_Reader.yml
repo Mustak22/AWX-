@@ -17,7 +17,7 @@
       win_get_url:
         url: "{{ acrobat_installer_url }}"
         dest: "{{ acrobat_installer_path }}"
-        checksum: "sha256:PLACE-CHECKSUM-HERE" # Optional: If you have a checksum for validation
+       
 
     - name: Install Acrobat Reader silently
       win_command:
