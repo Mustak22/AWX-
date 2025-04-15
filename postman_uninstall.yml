@@ -1,43 +1,54 @@
-- name: Uninstall Postman from all possible locations
+- name: Install Postman system-wide and make available to all users
   hosts: all
   gather_facts: no
   vars:
-    choco_path: C:\ProgramData\chocolatey\bin\choco.exe
-    postman_programfiles_path: C:\Program Files\Postman
-    postman_localappdata_path: C:\Users\Administrator\AppData\Local\Postman
-    postman_shortcut_public: C:\Users\Public\Desktop\Postman.lnk
-    postman_shortcut_admin: C:\Users\Administrator\Desktop\Postman.lnk
+    postman_download_url: https://dl.pstmn.io/download/latest/win64
     postman_zip_path: C:\Temp\Postman-win64.zip
+    postman_install_path: C:\Program Files\Postman
+    postman_exe_path: C:\Program Files\Postman\Postman.exe
+    shortcut_path: C:\Users\Public\Desktop\Postman.lnk
 
   tasks:
 
-    - name: Uninstall Postman via Chocolatey (if installed)
-      win_command: "{{ choco_path }} uninstall postman -y"
-      register: choco_result
-      ignore_errors: yes
-      when: choco_path is exists
-
-    - name: Remove Postman from Program Files
+    - name: Create temp directory
       win_file:
-        path: "{{ postman_programfiles_path }}"
-        state: absent
+        path: C:\Temp
+        state: directory
 
-    - name: Remove Postman from LocalAppData (Administrator)
+    - name: Download Postman ZIP
+      win_get_url:
+        url: "{{ postman_download_url }}"
+        dest: "{{ postman_zip_path }}"
+
+    - name: Create install directory
       win_file:
-        path: "{{ postman_localappdata_path }}"
-        state: absent
+        path: "{{ postman_install_path }}"
+        state: directory
 
-    - name: Remove Postman shortcut from Public Desktop
-      win_file:
-        path: "{{ postman_shortcut_public }}"
-        state: absent
+    - name: Unzip Postman to Program Files
+      win_unzip:
+        src: "{{ postman_zip_path }}"
+        dest: "{{ postman_install_path }}"
+        remote_src: yes
 
-    - name: Remove Postman shortcut from Administrator Desktop
-      win_file:
-        path: "{{ postman_shortcut_admin }}"
-        state: absent
+    - name: Ensure Postman.exe exists
+      win_stat:
+        path: "{{ postman_exe_path }}"
+      register: postman_stat
 
-    - name: Remove leftover ZIP installer if present
+    - name: Create Postman shortcut on public desktop
+      win_shortcut:
+        src: "{{ postman_exe_path }}"
+        dest: "{{ shortcut_path }}"
+      when: postman_stat.stat.exists
+
+    - name: Cleanup downloaded zip
       win_file:
         path: "{{ postman_zip_path }}"
         state: absent
+    - name: Add Postman to system PATH
+      win_environment:
+        name: Path
+        state: present
+        value: "{{ postman_install_path }}"
+        level: machine
