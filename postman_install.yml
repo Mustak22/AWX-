@@ -4,6 +4,8 @@
   vars:
     choco_path: C:\ProgramData\chocolatey\bin\choco.exe
     postman_package: postman
+    postman_exe_path: C:\Users\Administrator\AppData\Local\Postman\Postman.exe
+    shortcut_src: C:\Users\Administrator\Desktop\Postman.lnk
 
   tasks:
 
@@ -16,25 +18,28 @@
     - name: Install Postman using Chocolatey
       win_command: "{{ choco_path }} install {{ postman_package }} -y"
 
+    - name: Wait for Postman installation to complete
+      pause:
+        seconds: 10
+
     - name: Find Postman.exe
       win_find:
-        paths:
-          - 'C:\Users'
-          - 'C:\Program Files'
-          - 'C:\Program Files (x86)'
-        patterns: 'Postman.exe'
-      register: postman_files
+        paths: C:\Users\Administrator\AppData\Local\Postman\
+        patterns: Postman.exe
+      register: postman_check
 
-    - name: Get currently logged-in user
-      win_command: powershell -Command "(Get-WmiObject -Class Win32_ComputerSystem).UserName"
+    - name: Get currently logged-in user (DOMAIN\username)
+      win_shell: |
+        (Get-CimInstance -ClassName Win32_ComputerSystem).UserName
       register: loggedin_user_raw
 
-    - name: Extract username
+    - name: Extract only username part (after \)
       set_fact:
-        current_user: "{{ loggedin_user_raw.stdout.split('\\')[-1] }}"
+        current_user: "{{ loggedin_user_raw.stdout | regex_replace('.*\\\\', '') | trim }}"
 
-    - name: Create shortcut on logged-in user’s desktop
-      win_shortcut:
-        src: "{{ postman_files.files[0].path }}"
-        dest: "C:\\Users\\{{ current_user }}\\Desktop\\Postman.lnk"
-      when: postman_files.matched > 0
+    - name: Move shortcut to currently logged-in user's Desktop
+      win_command: |
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "Move-Item -Path '{{ shortcut_src }}' -Destination 'C:\Users\{{ current_user }}\Desktop\' -Force"
+      args:
+        removes: "{{ shortcut_src }}"
+      when: postman_check.matched > 0
