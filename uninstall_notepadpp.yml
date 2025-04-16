@@ -20,10 +20,14 @@
           Write-Output "Notepad++ process not found or already terminated."
         }
 
-    - name: Remove Notepad++ program directory (if exists)
-      win_file:
-        path: 'C:\Program Files\Notepad++'
-        state: absent
+    - name: Force remove Notepad++ program directory (even if files are locked)
+      win_shell: |
+        try {
+          Remove-Item 'C:\Program Files\Notepad++' -Recurse -Force -ErrorAction Stop
+          Write-Output "Notepad++ directory removed successfully."
+        } catch {
+          Write-Output "Failed to remove Notepad++ directory: $_"
+        }
 
     - name: Remove Admin desktop shortcut
       win_file:
