@@ -3,5 +3,5 @@
   gather_facts: no
   tasks:
     - name: Run raw command
-      ansible.builtin.ping:
-     # raw: echo Connection success from Ansible
+      #ansible.builtin.ping:
+      raw: echo Connection success from Ansible
