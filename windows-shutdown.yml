@@ -1,0 +1,7 @@
+- name: Shutdown Windows systems
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Shutdown the system
+      win_command: shutdown /s /t 0
+      become: yes
