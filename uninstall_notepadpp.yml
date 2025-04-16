@@ -1,33 +1,39 @@
-- name: Uninstall Notepad++ and clean up
+- name: Uninstall Notepad++ and clean up shortcuts
   hosts: all
   gather_facts: no
   vars:
-    uninstall_path: "C:\\Program Files\\Notepad++\\uninstall.exe"
-    installer_path: "C:\\Temp\\npp_installer.exe"
+    npp_uninstaller_path: "C:\\Program Files\\Notepad++\\uninstall.exe"
+    npp_program_dir: "C:\\Program Files\\Notepad++"
     shortcut_admin: "C:\\Users\\Administrator\\Desktop\\Notepad++.lnk"
     shortcut_public: "C:\\Users\\Public\\Desktop\\Notepad++.lnk"
+    installer_path: "C:\\Temp\\npp_installer.exe"
 
   tasks:
     - name: Check if Notepad++ uninstaller exists
       win_stat:
-        path: "{{ uninstall_path }}"
-      register: np_uninstall
+        path: "{{ npp_uninstaller_path }}"
+      register: npp_uninstaller
 
-    - name: Uninstall Notepad++ silently
-      win_command: '"{{ uninstall_path }}" /S'
-      when: np_uninstall.stat.exists
+    - name: Run Notepad++ uninstaller silently
+      win_command: "{{ npp_uninstaller_path }} /S"
+      when: npp_uninstaller.stat.exists
 
-    - name: Delete Notepad++ installer if exists
+    - name: Remove Notepad++ program directory (if exists)
       win_file:
-        path: "{{ installer_path }}"
+        path: "{{ npp_program_dir }}"
         state: absent
 
-    - name: Delete shortcut from Administrator desktop
+    - name: Remove shortcut from Administrator desktop
       win_file:
         path: "{{ shortcut_admin }}"
         state: absent
 
-    - name: Delete shortcut from Public desktop
+    - name: Remove shortcut from Public desktop
       win_file:
         path: "{{ shortcut_public }}"
+        state: absent
+
+    - name: Remove installer if it still exists
+      win_file:
+        path: "{{ installer_path }}"
         state: absent
