@@ -14,7 +14,11 @@
 
     - name: Kill Notepad++ process (if running)
       win_shell: |
-        Stop-Process -Name notepad++ -Force -ErrorAction SilentlyContinue
+        try {
+          Get-Process "notepad++" -ErrorAction Stop | Stop-Process -Force
+        } catch {
+          Write-Output "Notepad++ process not found or already terminated."
+        }
 
     - name: Remove Notepad++ program directory (if exists)
       win_file:
