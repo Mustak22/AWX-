@@ -15,7 +15,7 @@
       register: npp_uninstaller
 
     - name: Run Notepad++ uninstaller silently
-      win_command: "{{ npp_uninstaller_path }} /S"
+      win_command: '"{{ npp_uninstaller_path }}" /S'
       when: npp_uninstaller.stat.exists
 
     - name: Remove Notepad++ program directory (if exists)
