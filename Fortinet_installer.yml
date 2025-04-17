@@ -1,5 +1,5 @@
 - name: Download and install Fortinet using WinRM
-  hosts: windows_targets
+  hosts: all
   gather_facts: no
   vars:
     installer_url: "https://fortinet.en.softonic.com/support?dt=internalDownload&installerType=riseInstaller"
