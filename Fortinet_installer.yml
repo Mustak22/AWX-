@@ -4,7 +4,7 @@
   gather_facts: false
 
   vars:
-    installer_url: "https://fortinet.com/downloads/forticlient"  # Replace with the actual direct download URL
+    installer_url: "https://fortinet.com/path/to/installer/forticlient-installer.exe"  # Use the correct direct URL here
     installer_path: "C:\\Temp\\FortiClientInstaller.exe"
     exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
     shortcut_admin: "C:\\Users\\Administrator\\Desktop\\FortiClient.lnk"
