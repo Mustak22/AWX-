@@ -2,11 +2,10 @@
   hosts: all
   gather_facts: no
   vars:
-    installer_url: "https://github.com/Mustak22/FortiClient-VPN-Installer/releases/download/v1.0/FortiClientVPNInstaller.exe"  # Update this to actual GitHub release URL
     installer_path: "C:\\Temp\\FortiClientVPNInstaller.exe"
-    exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
-    shortcut_admin: "C:\\Users\\Administrator\\Desktop\\FortiClient VPN.lnk"
-    shortcut_public: "C:\\Users\\Public\\Desktop\\FortiClient VPN.lnk"
+    exe_path: "C:\\Program Files\\FortiClient\\FortiClient.exe"
+    shortcut_admin: "C:\\Users\\Administrator\\Desktop\\FortiClient.lnk"
+    shortcut_public: "C:\\Users\\Public\\Desktop\\FortiClient.lnk"
     public_desktop_dir: "C:\\Users\\Public\\Desktop"
 
   tasks:
@@ -15,9 +14,9 @@
         path: "C:\\Temp"
         state: directory
 
-    - name: Download FortiClient VPN installer
-      win_get_url:
-        url: "{{ installer_url }}"
+    - name: Copy FortiClient VPN installer to target machine
+      win_copy:
+        src: "D:/Backup/FortiClient-VPN-Installer/FortiClientVPNInstaller.exe"
         dest: "{{ installer_path }}"
 
     - name: Install FortiClient VPN silently
@@ -25,7 +24,7 @@
       args:
         chdir: "C:\\Temp"
 
-    - name: Wait for FortiClient VPN to be installed
+    - name: Wait for FortiClient VPN installation to complete
       win_wait_for:
         path: "{{ exe_path }}"
         state: present
@@ -41,13 +40,13 @@
         path: "{{ public_desktop_dir }}"
         state: directory
 
-    - name: Copy shortcut to Public desktop
+    - name: Copy shortcut to Public desktop (visible to all users)
       win_copy:
         src: "{{ shortcut_admin }}"
         dest: "{{ shortcut_public }}"
         remote_src: true
 
-    - name: Cleanup FortiClient installer
+    - name: Cleanup FortiClient VPN installer
       win_file:
         path: "{{ installer_path }}"
         state: absent
