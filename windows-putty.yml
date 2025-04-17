@@ -1,9 +1,0 @@
----
-- name: Install PuTTY on Windows Machines
-  hosts: windows  # Targets the 'windows' group from your inventory
-  gather_facts: yes
-  tasks:
-    - name: Install PuTTY via Chocolatey
-      win_chocolatey:
-        name: putty
-        state: present
