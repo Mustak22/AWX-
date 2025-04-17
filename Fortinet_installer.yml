@@ -1,14 +1,12 @@
----
-- name: Download and install FortiClient on Windows
-  hosts: all  # This will target all hosts in your inventory
-  gather_facts: false
-
+- name: Install FortiClient VPN and place shortcut on all desktops
+  hosts: all
+  gather_facts: no
   vars:
-    installer_url: "https://fortinet.com/path/to/actual-installer.exe"  # Correct URL from Fortinet's website
-    installer_path: "C:\\Temp\\FortiClientInstaller.exe"
+    installer_url: "https://github.com/Mustak22/FortiClient-VPN-Installer/releases/download/v1.0/FortiClientVPNInstaller.exe"  # Update this to actual GitHub release URL
+    installer_path: "C:\\Temp\\FortiClientVPNInstaller.exe"
     exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
-    shortcut_admin: "C:\\Users\\Administrator\\Desktop\\FortiClient.lnk"
-    shortcut_public: "C:\\Users\\Public\\Desktop\\FortiClient.lnk"
+    shortcut_admin: "C:\\Users\\Administrator\\Desktop\\FortiClient VPN.lnk"
+    shortcut_public: "C:\\Users\\Public\\Desktop\\FortiClient VPN.lnk"
     public_desktop_dir: "C:\\Users\\Public\\Desktop"
 
   tasks:
@@ -17,15 +15,21 @@
         path: "C:\\Temp"
         state: directory
 
-    - name: Download FortiClient installer
+    - name: Download FortiClient VPN installer
       win_get_url:
         url: "{{ installer_url }}"
         dest: "{{ installer_path }}"
 
-    - name: Install FortiClient silently using win_command
+    - name: Install FortiClient VPN silently
       win_command: "{{ installer_path }} /quiet"
       args:
         chdir: "C:\\Temp"
+
+    - name: Wait for FortiClient VPN to be installed
+      win_wait_for:
+        path: "{{ exe_path }}"
+        state: present
+        timeout: 120
 
     - name: Create shortcut on Administrator desktop
       win_shortcut:
@@ -37,13 +41,13 @@
         path: "{{ public_desktop_dir }}"
         state: directory
 
-    - name: Copy shortcut to Public desktop (visible to all users)
+    - name: Copy shortcut to Public desktop
       win_copy:
         src: "{{ shortcut_admin }}"
         dest: "{{ shortcut_public }}"
         remote_src: true
 
-    - name: Cleanup installer
+    - name: Cleanup FortiClient installer
       win_file:
         path: "{{ installer_path }}"
         state: absent
