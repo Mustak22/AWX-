@@ -2,11 +2,11 @@
   hosts: all
   gather_facts: no
   vars:
-    installer_url: "https://github.com/Mustak22/FortiClient-VPN-Installer/releases/download/v1.0/FortiClientVPNInstaller.exe"  # Your direct GitHub URL
+    installer_url: "https://github.com/Mustak22/FortiClient-VPN-Installer/releases/download/v1.0/FortiClientVPNInstaller.exe"
     installer_path: "C:\\Temp\\FortiClientVPNInstaller.exe"
-    exe_path: "C:\\Program Files\\FortiClient\\FortiClient.exe"
-    shortcut_admin: "C:\\Users\\Administrator\\Desktop\\FortiClientVPN.lnk"
-    shortcut_public: "C:\\Users\\Public\\Desktop\\FortiClientVPN.lnk"
+    exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
+    shortcut_admin: "C:\\Users\\Administrator\\Desktop\\FortiClient.lnk"
+    shortcut_public: "C:\\Users\\Public\\Desktop\\FortiClient.lnk"
     public_desktop_dir: "C:\\Users\\Public\\Desktop"
 
   tasks:
@@ -15,17 +15,21 @@
         path: "C:\\Temp"
         state: directory
 
-    - name: Download FortiClient VPN installer from GitHub
+    - name: Download FortiClient VPN installer
       win_get_url:
         url: "{{ installer_url }}"
         dest: "{{ installer_path }}"
 
-    - name: Install FortiClient VPN silently using win_command
-      win_command: "{{ installer_path }} /quiet"
-      args:
-        chdir: "C:\\Temp"
+    - name: Check if FortiClient installer exists
+      win_stat:
+        path: "{{ installer_path }}"
+      register: installer_stat
 
-    - name: Wait for FortiClient VPN installation to complete
+    - name: Install FortiClient VPN silently
+      win_command: "{{ installer_path }} /quiet"
+      when: installer_stat.stat.exists
+
+    - name: Wait for FortiClient installation to complete
       win_wait_for:
         path: "{{ exe_path }}"
         state: present
