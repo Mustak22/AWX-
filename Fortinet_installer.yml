@@ -1,43 +1,47 @@
-- name: Download and install Fortinet using WinRM
-  hosts: all
-  gather_facts: yes
+---
+- name: Download and install FortiClient on Windows
+  hosts: all  # This will target all hosts in your inventory
+  gather_facts: false
+
   vars:
-    installer_url: "https://fortinet.en.softonic.com/support?dt=internalDownload&installerType=riseInstaller"
-    installer_path: "C:\\Temp\\FortinetInstaller.exe"
-    shortcut_path: "C:\\Users\\Public\\Desktop\\Fortinet.lnk"
-    exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"  # Adjust if needed
-    temp_dir: "C:\\Temp"
+    installer_url: "https://fortinet.com/downloads/forticlient"  # Replace with the actual direct download URL
+    installer_path: "C:\\Temp\\FortiClientInstaller.exe"
+    exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
+    shortcut_admin: "C:\\Users\\Administrator\\Desktop\\FortiClient.lnk"
+    shortcut_public: "C:\\Users\\Public\\Desktop\\FortiClient.lnk"
     public_desktop_dir: "C:\\Users\\Public\\Desktop"
 
   tasks:
     - name: Ensure Temp directory exists
       win_file:
-        path: "{{ temp_dir }}"
+        path: "C:\\Temp"
         state: directory
 
-    - name: Download Fortinet installer using curl via win_command
-      win_command: |
-        curl -L -o "{{ installer_path }}" "{{ installer_url }}"
+    - name: Download FortiClient installer
+      win_get_url:
+        url: "{{ installer_url }}"
+        dest: "{{ installer_path }}"
 
-    - name: Install Fortinet silently with administrator privileges
-      win_shell: |
-        Start-Process -FilePath "{{ installer_path }}" -ArgumentList '/quiet' -Verb RunAs
+    - name: Install FortiClient silently using win_command
+      win_command: "{{ installer_path }} /quiet"
       args:
-        chdir: "{{ temp_dir }}"
+        chdir: "C:\\Temp"
 
-    - name: Pause for 15 seconds to allow installation to complete
-      pause:
-        seconds: 15
+    - name: Create shortcut on Administrator desktop
+      win_shortcut:
+        src: "{{ exe_path }}"
+        dest: "{{ shortcut_admin }}"
 
     - name: Ensure Public Desktop directory exists
       win_file:
         path: "{{ public_desktop_dir }}"
         state: directory
 
-    - name: Create Fortinet shortcut on Public desktop
-      win_shortcut:
-        src: "{{ exe_path }}"
-        dest: "{{ shortcut_path }}"
+    - name: Copy shortcut to Public desktop (visible to all users)
+      win_copy:
+        src: "{{ shortcut_admin }}"
+        dest: "{{ shortcut_public }}"
+        remote_src: true
 
     - name: Cleanup installer
       win_file:
