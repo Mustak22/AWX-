@@ -5,7 +5,7 @@
     installer_url: "https://fortinet.en.softonic.com/support?dt=internalDownload&installerType=riseInstaller"
     installer_path: "C:\\Temp\\FortinetInstaller.exe"
     shortcut_path: "C:\\Users\\Public\\Desktop\\Fortinet.lnk"
-    exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"  # Adjust this if different
+    exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"  # Adjust if needed
     temp_dir: "C:\\Temp"
     public_desktop_dir: "C:\\Users\\Public\\Desktop"
 
@@ -25,8 +25,8 @@
       args:
         chdir: "{{ temp_dir }}"
 
-    - name: Wait for Fortinet to install (optional pause)
-      win_pause:
+    - name: Pause for 15 seconds to allow installation to complete
+      pause:
         seconds: 15
 
     - name: Ensure Public Desktop directory exists
