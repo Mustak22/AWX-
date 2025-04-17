@@ -51,3 +51,7 @@
       win_file:
         path: "{{ installer_path }}"
         state: absent
+
+    - name: ✅ Confirm successful installation
+      debug:
+        msg: "✅ Postman has been installed and shortcuts placed on all desktops."
