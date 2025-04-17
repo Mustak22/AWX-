@@ -25,6 +25,12 @@
       args:
         chdir: "C:\\Temp"
 
+    - name: Wait for Notepad++ to be installed
+      win_wait_for:
+        path: "{{ exe_path }}"
+        state: present
+        timeout: 60
+
     - name: Create shortcut on Administrator desktop
       win_shortcut:
         src: "{{ exe_path }}"
@@ -45,3 +51,7 @@
       win_file:
         path: "{{ installer_path }}"
         state: absent
+
+    - name: ✅ Confirm successful installation
+      debug:
+        msg: "✅ Notepad++ has been installed and shortcuts placed successfully on all desktops."
