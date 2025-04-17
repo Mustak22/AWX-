@@ -2,20 +2,24 @@
   hosts: all
   gather_facts: no
   vars:
-    choco_path: C:\ProgramData\chocolatey\bin\choco.exe
-    postman_programfiles_path: C:\Program Files\Postman
-    postman_localappdata_path: C:\Users\Administrator\AppData\Local\Postman
-    postman_shortcut_public: C:\Users\Public\Desktop\Postman.lnk
-    postman_shortcut_admin: C:\Users\Administrator\Desktop\Postman.lnk
-    postman_zip_path: C:\Temp\Postman-win64.zip
+    choco_path: "C:\\ProgramData\\chocolatey\\bin\\choco.exe"
+    postman_programfiles_path: "C:\\Program Files\\Postman"
+    postman_localappdata_path: "C:\\Users\\Administrator\\AppData\\Local\\Postman"
+    postman_shortcut_public: "C:\\Users\\Public\\Desktop\\Postman.lnk"
+    postman_shortcut_admin: "C:\\Users\\Administrator\\Desktop\\Postman.lnk"
+    postman_zip_path: "C:\\Temp\\Postman-win64.zip"
 
   tasks:
 
+    - name: Check if Chocolatey is installed
+      win_stat:
+        path: "{{ choco_path }}"
+      register: choco_exists
+
     - name: Uninstall Postman via Chocolatey (if installed)
       win_command: "{{ choco_path }} uninstall postman -y"
-      register: choco_result
+      when: choco_exists.stat.exists
       ignore_errors: yes
-      when: choco_path is exists
 
     - name: Remove Postman from Program Files
       win_file:
@@ -41,16 +45,21 @@
       win_file:
         path: "{{ postman_zip_path }}"
         state: absent
-    - name: Find and delete all broken Postman shortcuts on all user desktops
+
+    - name: Find any remaining Postman shortcuts on user desktops
       win_find:
-        paths:
-          - 'C:\Users'
+        paths: ['C:\\Users']
         patterns: 'Postman.lnk'
         recurse: yes
       register: found_postman_shortcuts
 
-    - name: Remove broken Postman shortcuts
+    - name: Delete found Postman shortcuts
       win_file:
         path: "{{ item.path }}"
         state: absent
       loop: "{{ found_postman_shortcuts.files }}"
+      when: found_postman_shortcuts.matched > 0
+
+    - name: ✅ Confirm Postman uninstallation complete
+      debug:
+        msg: "✅ Postman has been successfully uninstalled and all shortcuts cleaned up."
