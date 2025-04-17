@@ -1,9 +1,0 @@
----
-- name: Install Git on CentOS
-  hosts: centos_servers  # Replace with the group or host where you want to install Git
-  become: yes            # Use sudo to install packages
-  tasks:
-    - name: Ensure Git is installed
-      yum:
-        name: git
-        state: present
