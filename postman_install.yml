@@ -1,54 +1,53 @@
-- name: Install Postman system-wide and make available to all users
+- name: Install Postman and place shortcut on all desktops
   hosts: all
   gather_facts: no
   vars:
-    postman_download_url: https://dl.pstmn.io/download/latest/win64
-    postman_zip_path: C:\Temp\Postman-win64.zip
-    postman_install_path: C:\Program Files\Postman
-    postman_exe_path: C:\Program Files\Postman\Postman.exe
-    shortcut_path: C:\Users\Public\Desktop\Postman.lnk
+    installer_url: "https://dl.pstmn.io/download/latest/win64"  # Official Postman Windows 64-bit installer
+    installer_path: "C:\\Temp\\Postman-win64-setup.exe"
+    exe_path: "C:\\Users\\{{ ansible_user }}\\AppData\\Local\\Postman\\Postman.exe"
+    shortcut_admin: "C:\\Users\\Administrator\\Desktop\\Postman.lnk"
+    shortcut_public: "C:\\Users\\Public\\Desktop\\Postman.lnk"
+    public_desktop_dir: "C:\\Users\\Public\\Desktop"
 
   tasks:
-
-    - name: Create temp directory
+    - name: Ensure Temp directory exists
       win_file:
-        path: C:\Temp
+        path: "C:\\Temp"
         state: directory
 
-    - name: Download Postman ZIP
+    - name: Download Postman installer
       win_get_url:
-        url: "{{ postman_download_url }}"
-        dest: "{{ postman_zip_path }}"
+        url: "{{ installer_url }}"
+        dest: "{{ installer_path }}"
 
-    - name: Create install directory
+    - name: Install Postman silently
+      win_command: "{{ installer_path }} /silent"
+      args:
+        chdir: "C:\\Temp"
+
+    - name: Wait for Postman installation to complete
+      win_wait_for:
+        path: "{{ exe_path }}"
+        state: present
+        timeout: 120
+
+    - name: Create shortcut on Administrator desktop
+      win_shortcut:
+        src: "{{ exe_path }}"
+        dest: "{{ shortcut_admin }}"
+
+    - name: Ensure Public Desktop directory exists
       win_file:
-        path: "{{ postman_install_path }}"
+        path: "{{ public_desktop_dir }}"
         state: directory
 
-    - name: Unzip Postman to Program Files
-      win_unzip:
-        src: "{{ postman_zip_path }}"
-        dest: "{{ postman_install_path }}"
-        remote_src: yes
+    - name: Copy shortcut to Public desktop (visible to all users)
+      win_copy:
+        src: "{{ shortcut_admin }}"
+        dest: "{{ shortcut_public }}"
+        remote_src: true
 
-    - name: Ensure Postman.exe exists
-      win_stat:
-        path: "{{ postman_exe_path }}"
-      register: postman_stat
-
-    - name: Create Postman shortcut on public desktop
-      win_shortcut:
-        src: "{{ postman_exe_path }}"
-        dest: "{{ shortcut_path }}"
-      when: postman_stat.stat.exists
-
-    - name: Cleanup downloaded zip
+    - name: Cleanup Postman installer
       win_file:
-        path: "{{ postman_zip_path }}"
+        path: "{{ installer_path }}"
         state: absent
-    - name: Add Postman to system PATH
-      win_environment:
-        name: Path
-        state: present
-        value: "{{ postman_install_path }}"
-        level: machine
