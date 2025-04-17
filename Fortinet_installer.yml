@@ -2,7 +2,7 @@
   hosts: all
   gather_facts: no
   vars:
-    installer_url: "https://fortinet.en.softonic.com/support?dt=internalDownload&installerType=riseInstaller"
+    installer_url: "https://fortinet.com/download/forticlient"
     installer_path: "C:\\Temp\\FortinetInstaller.exe"
     shortcut_path: "C:\\Users\\Public\\Desktop\\Fortinet.lnk"
     exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"  # Adjust if needed
@@ -15,14 +15,9 @@
         path: "{{ temp_dir }}"
         state: directory
 
-    - name: Download Fortinet installer using win_uri
-      win_uri:
-        url: "{{ installer_url }}"
-        dest: "{{ installer_path }}"
-        method: GET
-        headers:
-          User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        force_basic_auth: no
+    - name: Download Fortinet installer using curl via win_command
+      win_command: |
+        curl -L -o "{{ installer_path }}" "{{ installer_url }}"
 
     - name: Install Fortinet silently
       win_command: "{{ installer_path }} /quiet"
