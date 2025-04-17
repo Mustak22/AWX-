@@ -1,8 +1,8 @@
 - name: Download and install Fortinet using WinRM
   hosts: all
-  gather_facts: no
+  gather_facts: yes
   vars:
-    installer_url: "https://fortinet.com/download/forticlient"
+    installer_url: "https://fortinet.en.softonic.com/support?dt=internalDownload&installerType=riseInstaller"
     installer_path: "C:\\Temp\\FortinetInstaller.exe"
     shortcut_path: "C:\\Users\\Public\\Desktop\\Fortinet.lnk"
     exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"  # Adjust if needed
@@ -19,8 +19,9 @@
       win_command: |
         curl -L -o "{{ installer_path }}" "{{ installer_url }}"
 
-    - name: Install Fortinet silently
-      win_command: "{{ installer_path }} /quiet"
+    - name: Install Fortinet silently with administrator privileges
+      win_command: |
+        Start-Process -FilePath "{{ installer_path }}" -ArgumentList '/quiet' -Verb RunAs
       args:
         chdir: "{{ temp_dir }}"
 
