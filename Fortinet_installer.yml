@@ -1,46 +1,21 @@
-- name: Install FortiClient VPN and place shortcut on all desktops
-  hosts: all
-  gather_facts: no
-  vars:
-    installer_src: "files/FortiClientVPNInstaller.exe"
-    installer_dest: "C:\\Temp\\FortiClientVPNInstaller.exe"
-    exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
-    shortcut_admin: "C:\\Users\\Administrator\\Desktop\\FortiClient.lnk"
-    shortcut_public: "C:\\Users\\Public\\Desktop\\FortiClient.lnk"
-
+- name: Install FortiClient VPN
+  hosts: windows_machines  # or your relevant host group
+  gather_facts: yes
   tasks:
-    - name: Ensure Temp directory exists
-      win_file:
-        path: "C:\\Temp"
-        state: directory
-
     - name: Copy FortiClient VPN installer to target machine
       win_copy:
-        src: "{{ installer_src }}"
-        dest: "{{ installer_dest }}"
+        src: files/FortiClientVPNInstaller.exe
+        dest: C:\Temp\FortiClientVPNInstaller.exe
 
-    - name: Install FortiClient silently
-      win_command: "{{ installer_dest }} /quiet"
+    - name: Run the installer silently
+      win_command: C:\Temp\FortiClientVPNInstaller.exe /quiet
       args:
-        chdir: "C:\\Temp"
+        creates: C:\Program Files\Postman\FortiClientVPN.exe  # Adjust the path to check if FortiClient is installed.
 
-    - name: Wait for FortiClient to be installed
-      win_wait_for:
-        path: "{{ exe_path }}"
-        state: present
-        timeout: 180
-
-    - name: Create FortiClient shortcut on Administrator desktop
+    - name: Create shortcut on all user desktops
       win_shortcut:
-        src: "{{ exe_path }}"
-        dest: "{{ shortcut_admin }}"
-
-    - name: Create FortiClient shortcut on Public desktop
-      win_shortcut:
-        src: "{{ exe_path }}"
-        dest: "{{ shortcut_public }}"
-
-    - name: Cleanup installer
-      win_file:
-        path: "{{ installer_dest }}"
-        state: absent
+        path: C:\Users\Public\Desktop\FortiClientVPN.lnk
+        target: C:\Program Files\Postman\FortiClientVPN.exe  # Adjust the target path accordingly.
+        arguments: ''
+        description: 'FortiClient VPN'
+        icon: 'C:\Program Files\Postman\FortiClientVPN.ico'  # Change if you have an icon.
