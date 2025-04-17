@@ -1,7 +1,0 @@
-- name: Show message using mshta popup (auto-close after 10 seconds)
-  hosts: all
-  gather_facts: no
-  tasks:
-    - name: Show auto-closing message box
-      win_shell: |
-        mshta "javascript:var sh=new ActiveXObject('WScript.Shell'); sh.Popup('🔍 I am Monitoring...', 10, 'Monitoring', 64);close()"
