@@ -15,10 +15,14 @@
         path: "{{ temp_dir }}"
         state: directory
 
-    - name: Download Fortinet installer
-      win_get_url:
+    - name: Download Fortinet installer using win_uri
+      win_uri:
         url: "{{ installer_url }}"
         dest: "{{ installer_path }}"
+        method: GET
+        headers:
+          User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        force_basic_auth: no
 
     - name: Install Fortinet silently
       win_command: "{{ installer_path }} /quiet"
