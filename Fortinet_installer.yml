@@ -20,7 +20,7 @@
         curl -L -o "{{ installer_path }}" "{{ installer_url }}"
 
     - name: Install Fortinet silently with administrator privileges
-      win_command: |
+      win_shell: |
         Start-Process -FilePath "{{ installer_path }}" -ArgumentList '/quiet' -Verb RunAs
       args:
         chdir: "{{ temp_dir }}"
