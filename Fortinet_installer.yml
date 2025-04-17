@@ -1,0 +1,45 @@
+- name: Download and install Fortinet using WinRM
+  hosts: windows_targets
+  gather_facts: no
+  vars:
+    installer_url: "https://fortinet.en.softonic.com/support?dt=internalDownload&installerType=riseInstaller"
+    installer_path: "C:\\Temp\\FortinetInstaller.exe"
+    shortcut_path: "C:\\Users\\Public\\Desktop\\Fortinet.lnk"
+    exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"  # Adjust this if different
+    temp_dir: "C:\\Temp"
+    public_desktop_dir: "C:\\Users\\Public\\Desktop"
+
+  tasks:
+    - name: Ensure Temp directory exists
+      win_file:
+        path: "{{ temp_dir }}"
+        state: directory
+
+    - name: Download Fortinet installer
+      win_get_url:
+        url: "{{ installer_url }}"
+        dest: "{{ installer_path }}"
+
+    - name: Install Fortinet silently
+      win_command: "{{ installer_path }} /quiet"
+      args:
+        chdir: "{{ temp_dir }}"
+
+    - name: Wait for Fortinet to install (optional pause)
+      win_pause:
+        seconds: 15
+
+    - name: Ensure Public Desktop directory exists
+      win_file:
+        path: "{{ public_desktop_dir }}"
+        state: directory
+
+    - name: Create Fortinet shortcut on Public desktop
+      win_shortcut:
+        src: "{{ exe_path }}"
+        dest: "{{ shortcut_path }}"
+
+    - name: Cleanup installer
+      win_file:
+        path: "{{ installer_path }}"
+        state: absent
