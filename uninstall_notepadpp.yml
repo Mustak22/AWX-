@@ -38,3 +38,7 @@
       win_file:
         path: 'C:\Users\Public\Desktop\Notepad++.lnk'
         state: absent
+
+    - name: ✅ Confirm successful uninstallation
+      debug:
+        msg: "✅ Notepad++ has been uninstalled and all shortcuts have been removed successfully."
