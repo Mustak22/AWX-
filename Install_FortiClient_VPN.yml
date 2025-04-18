@@ -1,0 +1,37 @@
+- name: Install FortiClient VPN and place shortcut on all desktops
+  hosts: all
+  gather_facts: no
+  vars:
+    installer_src: "files/FortiClientVPNInstaller.exe"
+    installer_dest: "C:\\Temp\\FortiClientVPNInstaller.exe"
+    install_args: "/quiet /norestart"
+    forticlient_shortcut_path: "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\FortiClient VPN.lnk"
+    public_desktop_shortcut: "C:\\Users\\Public\\Desktop\\FortiClient VPN.lnk"
+
+  tasks:
+
+    - name: Ensure Temp directory exists on target
+      win_file:
+        path: "C:\\Temp"
+        state: directory
+
+    - name: Copy FortiClient VPN installer to target machine
+      win_copy:
+        src: "{{ installer_src }}"
+        dest: "{{ installer_dest }}"
+
+    - name: Install FortiClient VPN silently
+      win_package:
+        path: "{{ installer_dest }}"
+        arguments: "{{ install_args }}"
+        state: present
+
+    - name: Copy shortcut to Public Desktop
+      win_shortcut:
+        src: "{{ forticlient_shortcut_path }}"
+        dest: "{{ public_desktop_shortcut }}"
+      when: ansible_facts.os_family == "Windows"
+
+    - name: ✅ Confirm FortiClient VPN installation complete
+      debug:
+        msg: "✅ FortiClient VPN has been installed successfully and shortcut placed on Public Desktop."
