@@ -19,7 +19,14 @@
     - name: Uninstall Postman via Chocolatey (if installed)
       win_command: "{{ choco_path }} uninstall postman -y"
       when: choco_exists.stat.exists
-      ignore_errors: yes
+      register: choco_uninstall
+      failed_when: false
+      changed_when: "'postman is not installed' not in choco_uninstall.stdout"
+
+    - name: Debug Chocolatey uninstall output
+      debug:
+        var: choco_uninstall.stdout_lines
+      when: choco_exists.stat.exists
 
     - name: Remove Postman from Program Files
       win_file:
