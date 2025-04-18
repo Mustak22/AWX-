@@ -1,0 +1,49 @@
+- name: Uninstall IntelliJ IDEA Community Edition from Windows
+  hosts: all
+  gather_facts: no
+  vars:
+    choco_path: "C:\\ProgramData\\chocolatey\\bin\\choco.exe"
+    intellij_package_name: "intellijidea-community"
+    intellij_install_path: "C:\\Program Files\\JetBrains\\IntelliJ IDEA Community Edition"
+    intellij_shortcut_public: "C:\\Users\\Public\\Desktop\\IntelliJ IDEA Community Edition.lnk"
+    intellij_shortcut_admin: "C:\\Users\\Administrator\\Desktop\\IntelliJ IDEA Community Edition.lnk"
+
+  tasks:
+
+    - name: Check if Chocolatey is installed
+      win_stat:
+        path: "{{ choco_path }}"
+      register: choco_exists
+
+    - name: Fail if Chocolatey is not installed
+      fail:
+        msg: "❌ Chocolatey is not installed on this system."
+      when: not choco_exists.stat.exists
+
+    - name: Uninstall IntelliJ IDEA Community Edition via Chocolatey
+      win_command: "{{ choco_path }} uninstall {{ intellij_package_name }} -y"
+      register: uninstall_output
+      ignore_errors: yes
+
+    - name: Debug uninstall output
+      debug:
+        var: uninstall_output.stdout_lines
+
+    - name: Remove leftover IntelliJ install directory (if exists)
+      win_file:
+        path: "{{ intellij_install_path }}"
+        state: absent
+
+    - name: Remove IntelliJ shortcut from Public Desktop
+      win_file:
+        path: "{{ intellij_shortcut_public }}"
+        state: absent
+
+    - name: Remove IntelliJ shortcut from Administrator Desktop
+      win_file:
+        path: "{{ intellij_shortcut_admin }}"
+        state: absent
+
+    - name: ✅ Confirm IntelliJ uninstallation complete
+      debug:
+        msg: "✅ IntelliJ IDEA Community Edition has been uninstalled successfully!"
