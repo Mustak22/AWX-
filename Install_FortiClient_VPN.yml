@@ -2,8 +2,9 @@
   hosts: all
   gather_facts: no
   vars:
-    forticlient_download_url: "https://filestore.fortinet.com/forticlient/downloads/FortiClientVPN_OnlineInstaller.exe"
+    forticlient_download_url: "https://links.fortinet.com/forticlient/win64/fabricagent"
     forticlient_installer_path: "C:\\Temp\\FortiClientVPNInstaller.exe"
+    forticlient_exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
     forticlient_shortcut_path: "C:\\Users\\Public\\Desktop\\FortiClient VPN.lnk"
 
   tasks:
@@ -12,11 +13,11 @@
         path: "C:\\Temp"
         state: directory
 
-    - name: Download FortiClient VPN installer from internet
+    - name: Download FortiClient VPN installer from Fortinet
       win_get_url:
         url: "{{ forticlient_download_url }}"
         dest: "{{ forticlient_installer_path }}"
-        validate_certs: no  # Set to yes if using HTTPS and cert is valid
+        validate_certs: yes
 
     - name: Install FortiClient VPN silently
       win_package:
@@ -24,11 +25,22 @@
         arguments: "/quiet"
         state: present
 
-    - name: Ensure FortiClient VPN shortcut exists on Public Desktop
+    - name: Wait until FortiClient is installed
+      win_wait_for:
+        path: "{{ forticlient_exe_path }}"
+        state: present
+        timeout: 180
+
+    - name: Create FortiClient VPN shortcut on Public Desktop
       win_shortcut:
-        src: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
+        src: "{{ forticlient_exe_path }}"
         dest: "{{ forticlient_shortcut_path }}"
 
-    - name: ✅ Confirm FortiClient installation completed
+    - name: Cleanup FortiClient installer
+      win_file:
+        path: "{{ forticlient_installer_path }}"
+        state: absent
+
+    - name: ✅ Confirm FortiClient VPN installation completed
       debug:
-        msg: "✅ FortiClient VPN has been successfully installed and shortcut placed."
+        msg: "✅ FortiClient VPN installed and shortcut placed successfully."
