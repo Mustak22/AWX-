@@ -1,0 +1,31 @@
+- name: Install IntelliJ IDEA Community Edition on Windows
+  hosts: all
+  gather_facts: no
+  vars:
+    choco_path: "C:\\ProgramData\\chocolatey\\bin\\choco.exe"
+    intellij_package_name: "intellijidea-community"
+
+  tasks:
+
+    - name: Check if Chocolatey is installed
+      win_stat:
+        path: "{{ choco_path }}"
+      register: choco_exists
+
+    - name: Fail if Chocolatey is not installed
+      fail:
+        msg: "❌ Chocolatey is not installed. Please install Chocolatey first."
+      when: not choco_exists.stat.exists
+
+    - name: Install IntelliJ IDEA Community Edition using Chocolatey
+      win_command: "{{ choco_path }} install {{ intellij_package_name }} -y"
+      register: intellij_install
+      changed_when: "'installed' in intellij_install.stdout.lower() or 'already installed' not in intellij_install.stdout.lower()"
+
+    - name: Debug IntelliJ install output
+      debug:
+        var: intellij_install.stdout_lines
+
+    - name: ✅ Confirm IntelliJ installation complete
+      debug:
+        msg: "✅ IntelliJ IDEA Community Edition installed successfully!"
