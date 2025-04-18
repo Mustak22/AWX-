@@ -2,28 +2,29 @@
   hosts: all
   gather_facts: no
   vars:
-    forticlient_uninstaller_path: "C:\\Program Files\\Fortinet\\FortiClient\\uninst.exe"
-    forticlient_exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
+    uninstall_path: "C:\\Program Files\\Fortinet\\FortiClient\\uninstall.exe"
+    forticlient_exe: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
 
   tasks:
 
     - name: Check if FortiClient uninstaller exists
       win_stat:
-        path: "{{ forticlient_uninstaller_path }}"
-      register: uninstaller_exists
+        path: "{{ uninstall_path }}"
+      register: uninstaller
 
     - name: Run FortiClient uninstaller silently
-      win_command: "{{ forticlient_uninstaller_path }} /quiet /norestart"
-      when: uninstaller_exists.stat.exists
+      win_command: "{{ uninstall_path }} /quiet /norestart"
+      when: uninstaller.stat.exists
       register: uninstall_result
+      ignore_errors: yes
 
-    - name: Wait for FortiClient.exe to be removed
+    - name: Wait for uninstallation to complete
       win_wait_for:
-        path: "{{ forticlient_exe_path }}"
+        path: "{{ forticlient_exe }}"
         state: absent
         timeout: 180
-      when: uninstaller_exists.stat.exists
+      when: uninstaller.stat.exists
 
-    - name: Confirm FortiClient uninstallation complete
+    - name: Confirm FortiClient has been uninstalled
       debug:
-        msg: "✅ FortiClient has been uninstalled."
+        msg: "✅ FortiClient VPN has been uninstalled."
