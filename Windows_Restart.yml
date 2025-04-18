@@ -1,11 +1,12 @@
-- name: Restart Windows Machine
+- name: Reboot Windows machine immediately
   hosts: all
   gather_facts: no
 
   tasks:
-    - name: Restart the machine with a 60-second timeout
+    - name: Reboot the machine
       win_reboot:
         reboot_timeout: 600
-        pre_reboot_delay: 10
+        msg: "Reboot initiated by Ansible."
+        pre_reboot_delay: 5
         post_reboot_delay: 30
-        msg: "System will restart now due to scheduled maintenance via Ansible."
+        test_command: 'whoami'
