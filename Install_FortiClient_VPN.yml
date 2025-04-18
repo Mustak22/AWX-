@@ -2,36 +2,33 @@
   hosts: all
   gather_facts: no
   vars:
-    installer_src: "files/FortiClientVPNInstaller.exe"
-    installer_dest: "C:\\Temp\\FortiClientVPNInstaller.exe"
-    install_args: "/quiet /norestart"
-    forticlient_shortcut_path: "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\FortiClient VPN.lnk"
-    public_desktop_shortcut: "C:\\Users\\Public\\Desktop\\FortiClient VPN.lnk"
+    forticlient_download_url: "https://filestore.fortinet.com/forticlient/downloads/FortiClientVPN_OnlineInstaller.exe"
+    forticlient_installer_path: "C:\\Temp\\FortiClientVPNInstaller.exe"
+    forticlient_shortcut_path: "C:\\Users\\Public\\Desktop\\FortiClient VPN.lnk"
 
   tasks:
-
     - name: Ensure Temp directory exists on target
       win_file:
         path: "C:\\Temp"
         state: directory
 
-    - name: Copy FortiClient VPN installer to target machine
-      win_copy:
-        src: "{{ installer_src }}"
-        dest: "{{ installer_dest }}"
+    - name: Download FortiClient VPN installer from internet
+      win_get_url:
+        url: "{{ forticlient_download_url }}"
+        dest: "{{ forticlient_installer_path }}"
+        validate_certs: no  # Set to yes if using HTTPS and cert is valid
 
     - name: Install FortiClient VPN silently
       win_package:
-        path: "{{ installer_dest }}"
-        arguments: "{{ install_args }}"
+        path: "{{ forticlient_installer_path }}"
+        arguments: "/quiet"
         state: present
 
-    - name: Copy shortcut to Public Desktop
+    - name: Ensure FortiClient VPN shortcut exists on Public Desktop
       win_shortcut:
-        src: "{{ forticlient_shortcut_path }}"
-        dest: "{{ public_desktop_shortcut }}"
-      when: ansible_facts.os_family == "Windows"
+        src: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
+        dest: "{{ forticlient_shortcut_path }}"
 
-    - name: ✅ Confirm FortiClient VPN installation complete
+    - name: ✅ Confirm FortiClient installation completed
       debug:
-        msg: "✅ FortiClient VPN has been installed successfully and shortcut placed on Public Desktop."
+        msg: "✅ FortiClient VPN has been successfully installed and shortcut placed."
