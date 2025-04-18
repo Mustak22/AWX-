@@ -24,12 +24,17 @@
 
     - name: Get currently logged-in user
       win_shell: |
-        (Get-WmiObject -Class Win32_ComputerSystem).UserName
+        (Get-CimInstance -ClassName Win32_ComputerSystem).UserName
       register: logged_in_user_raw
+
+    - name: Fail if no user is logged in
+      fail:
+        msg: "❌ No user currently logged in. Cannot place shortcut."
+      when: logged_in_user_raw.stdout == ""
 
     - name: Extract username from DOMAIN\\Username
       set_fact:
-        logged_in_user: "{{ logged_in_user_raw.stdout.split('\\')[-1] }}"
+        logged_in_user: "{{ logged_in_user_raw.stdout.split('\\\\')[-1] }}"
 
     - name: Create FortiClient shortcut on current user's Desktop
       win_shortcut:
@@ -38,4 +43,4 @@
 
     - name: ✅ Confirm FortiClient installation completed
       debug:
-        msg: "✅ FortiClient installed and shortcut placed for user {{ logged_in_user }}"
+        msg: "✅ FortiClient VPN has been successfully installed and shortcut placed for user {{ logged_in_user }}"
