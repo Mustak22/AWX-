@@ -53,20 +53,6 @@
         path: "{{ postman_zip_path }}"
         state: absent
 
-    - name: Find any remaining Postman shortcuts on user desktops
-      win_find:
-        paths: ['C:\\Users']
-        patterns: 'Postman.lnk'
-        recurse: yes
-      register: found_postman_shortcuts
-
-    - name: Delete found Postman shortcuts
-      win_file:
-        path: "{{ item.path }}"
-        state: absent
-      loop: "{{ found_postman_shortcuts.files }}"
-      when: found_postman_shortcuts.matched > 0
-
     - name: ✅ Confirm Postman uninstallation complete
       debug:
-        msg: "✅ Postman has been successfully uninstalled and all shortcuts cleaned up."
+        msg: "✅ Postman has been successfully uninstalled and all known leftovers cleaned."
