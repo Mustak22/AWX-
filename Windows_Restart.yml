@@ -1,6 +1,6 @@
-- name: Reboot Windows using CMD
+- name: Reboot Windows via SSH (raw method)
   hosts: all
   gather_facts: no
   tasks:
-    - name: Restart with CMD shutdown
-      raw: shutdown /r /t 0 /f
+    - name: Run Windows reboot command using raw
+      raw: cmd.exe /c "start /b shutdown /r /t 5 /f"
