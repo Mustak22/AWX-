@@ -1,6 +1,7 @@
-- name: Restart Windows systems
+- name: Reboot Windows using SSH
   hosts: all
   gather_facts: no
   tasks:
-    - name: Restart the system immediately
-      win_shell: shutdown /r /t 0 /f
+    - name: Reboot Windows system via raw PowerShell
+      raw: |
+        powershell.exe -Command "Restart-Computer -Force"
