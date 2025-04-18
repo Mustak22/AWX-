@@ -1,10 +1,9 @@
-- name: Install FortiClient VPN and place shortcut on all desktops
+- name: Install FortiClient VPN for currently logged-in user
   hosts: all
-  gather_facts: no
+  gather_facts: yes
   vars:
     forticlient_download_url: "https://links.fortinet.com/forticlient/win64/fabricagent"
     forticlient_installer_path: "C:\\Temp\\FortiClientVPNInstaller.exe"
-    forticlient_shortcut_path: "C:\\Users\\Public\\Desktop\\FortiClient VPN.lnk"
 
   tasks:
 
@@ -23,11 +22,20 @@
     - name: Install FortiClient VPN silently
       win_command: "{{ forticlient_installer_path }} /quiet /norestart"
 
-    - name: Ensure FortiClient VPN shortcut exists on Public Desktop
+    - name: Get currently logged-in user
+      win_shell: |
+        (Get-WmiObject -Class Win32_ComputerSystem).UserName
+      register: logged_in_user_raw
+
+    - name: Extract username from DOMAIN\\Username
+      set_fact:
+        logged_in_user: "{{ logged_in_user_raw.stdout.split('\\')[-1] }}"
+
+    - name: Create FortiClient shortcut on current user's Desktop
       win_shortcut:
         src: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
-        dest: "{{ forticlient_shortcut_path }}"
+        dest: "C:\\Users\\{{ logged_in_user }}\\Desktop\\FortiClient VPN.lnk"
 
     - name: ✅ Confirm FortiClient installation completed
       debug:
-        msg: "✅ FortiClient VPN has been successfully installed and shortcut placed."
+        msg: "✅ FortiClient installed and shortcut placed for user {{ logged_in_user }}"
