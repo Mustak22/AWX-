@@ -1,30 +1,49 @@
-- name: Uninstall FortiClient VPN from Windows
+- name: Force Uninstall FortiClient VPN from Windows
   hosts: all
   gather_facts: no
   vars:
     uninstall_path: "C:\\Program Files\\Fortinet\\FortiClient\\uninstall.exe"
     forticlient_exe: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
+    forticlient_folder: "C:\\Program Files\\Fortinet"
 
   tasks:
 
-    - name: Check if FortiClient uninstaller exists
-      win_stat:
-        path: "{{ uninstall_path }}"
-      register: uninstaller
+    - name: Kill FortiClient-related processes
+      win_shell: |
+        Get-Process FortiClient* -ErrorAction SilentlyContinue | Stop-Process -Force
+      ignore_errors: yes
 
-    - name: Run FortiClient uninstaller silently
+    - name: Try to run the official FortiClient uninstaller
       win_command: "{{ uninstall_path }} /quiet /norestart"
-      when: uninstaller.stat.exists
       register: uninstall_result
       ignore_errors: yes
 
-    - name: Wait for uninstallation to complete
+    - name: Wait for FortiClient to be removed
       win_wait_for:
         path: "{{ forticlient_exe }}"
         state: absent
         timeout: 180
-      when: uninstaller.stat.exists
+      ignore_errors: yes
 
-    - name: Confirm FortiClient has been uninstalled
+    - name: Force remove FortiClient install folder
+      win_file:
+        path: "{{ forticlient_folder }}"
+        state: absent
+
+    - name: Delete FortiClient shortcut from all user desktops
+      win_find:
+        paths: ['C:\\Users']
+        patterns: 'FortiClient*.lnk'
+        recurse: yes
+      register: fc_shortcuts
+
+    - name: Remove detected FortiClient shortcuts
+      win_file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ fc_shortcuts.files }}"
+      when: fc_shortcuts.matched > 0
+
+    - name: ✅ Confirm FortiClient has been forcefully removed
       debug:
-        msg: "✅ FortiClient VPN has been uninstalled."
+        msg: "✅ FortiClient VPN forcibly uninstalled and cleaned up."
