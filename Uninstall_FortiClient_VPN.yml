@@ -1,0 +1,39 @@
+- name: Uninstall FortiClient VPN from Windows
+  hosts: all
+  gather_facts: no
+  vars:
+    forticlient_exe_path: "C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe"
+    forticlient_uninstaller: "C:\\Program Files\\Fortinet\\FortiClient\\Uninstaller.exe"
+    forticlient_shortcut_path: "C:\\Users\\Public\\Desktop\\FortiClient VPN.lnk"
+
+  tasks:
+
+    - name: Check if FortiClient uninstaller exists
+      win_stat:
+        path: "{{ forticlient_uninstaller }}"
+      register: uninstaller_check
+
+    - name: Run FortiClient uninstaller silently
+      win_command: '"{{ forticlient_uninstaller }}" /quiet'
+      when: uninstaller_check.stat.exists
+      ignore_errors: yes
+
+    - name: Wait for uninstallation to complete
+      win_wait_for:
+        path: "{{ forticlient_exe_path }}"
+        state: absent
+        timeout: 180
+
+    - name: Remove FortiClient VPN shortcut from Public Desktop
+      win_file:
+        path: "{{ forticlient_shortcut_path }}"
+        state: absent
+
+    - name: Delete leftover Fortinet folder if exists
+      win_file:
+        path: "C:\\Program Files\\Fortinet"
+        state: absent
+
+    - name: ✅ Confirm FortiClient VPN uninstallation complete
+      debug:
+        msg: "✅ FortiClient VPN has been successfully uninstalled."
