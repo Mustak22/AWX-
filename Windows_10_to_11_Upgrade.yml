@@ -11,15 +11,16 @@
         path: "C:\\Temp"
         state: directory
 
-    - name: Get currently logged-in user
-      win_shell: "(Get-WmiObject -Class Win32_ComputerSystem).UserName"
+    - name: Get currently logged-in username only
+      win_shell: |
+        (Get-WmiObject -Class Win32_ComputerSystem).UserName.Split("\\")[-1]
       register: user_raw
 
-    - name: Extract username from DOMAIN\\Username
+    - name: Set logged_in_user variable
       set_fact:
-        logged_in_user: "{{ user_raw.stdout.split('\\')[-1] }}"
+        logged_in_user: "{{ user_raw.stdout | trim }}"
 
-    - name: Create PowerShell popup and run Windows 11 Installation Assistant
+    - name: Create PowerShell script to popup and run installer
       win_copy:
         dest: "{{ upgrade_script_path }}"
         content: |
@@ -48,5 +49,4 @@
 
     - name: ✅ Popup and installer launched — follow steps manually
       debug:
-        msg: "✅ Popup and upgrade started for {{ logged_in_user }}. Please complete upgrade manually."
-
+        msg: "✅ Popup and upgrade started for {{ logged_in_user }}. Please complete the upgrade manually on the remote system."
