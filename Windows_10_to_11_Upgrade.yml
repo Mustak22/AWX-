@@ -13,7 +13,8 @@
 
     - name: Get currently logged-in username only
       win_shell: |
-        (Get-WmiObject -Class Win32_ComputerSystem).UserName.Split("\\")[-1]
+        $user = (Get-WmiObject -Class Win32_ComputerSystem).UserName
+        $user.Split("\\\\")[-1]
       register: user_raw
 
     - name: Set logged_in_user variable
@@ -42,7 +43,7 @@
         trigger:
           - type: once
             start_boundary: "{{ ansible_date_time.iso8601 }}"
-        register: upgrade_task
+      register: upgrade_task
 
     - name: Run the scheduled task
       win_command: schtasks /run /tn "Win11UpgradePopup"
