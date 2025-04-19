@@ -20,3 +20,7 @@
       win_file:
         path: "C:\\Temp\\OnlyOfficeDesktopEditors_x64.exe"
         state: absent
+
+    - name: ✅ ONLYOFFICE successfully installed
+      debug:
+        msg: "✅ ONLYOFFICE Desktop Editors installed successfully on {{ inventory_hostname }}"
