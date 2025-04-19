@@ -17,12 +17,12 @@
         dest: "{{ assistant_path }}"
         validate_certs: yes
 
-    - name: Run Windows 11 Installation Assistant
+    - name: Run Windows 11 Installation Assistant (starts upgrade wizard)
       win_shell: |
-        Start-Process -FilePath "{{ assistant_path }}" -ArgumentList "" -Verb RunAs
+        Start-Process -FilePath "{{ assistant_path }}" -ArgumentList @() -Verb RunAs
       args:
         executable: powershell.exe
 
-    - name: ✅ Windows 11 installation started. Please follow prompts on the target machine.
+    - name: ✅ Windows 11 installation started — User input required
       debug:
-        msg: "✅ Windows 11 upgrade has been initiated. User interaction may be required on the target machine."
+        msg: "✅ Installation Assistant launched. Please complete the upgrade interactively on the remote machine."
