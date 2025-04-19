@@ -1,27 +1,60 @@
 - name: Uninstall ONLYOFFICE Desktop Editors on Windows
   hosts: all
   gather_facts: yes
-
   tasks:
+
     - name: Get ONLYOFFICE uninstall string from registry
+      win_registry:
+        path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+        name: DisplayName
+        data: 'ONLYOFFICE Desktop Editors'
+        state: read
+      register: office_keys
+      failed_when: false
+      ignore_errors: true
+
+    - name: Search 64-bit uninstall key
+      win_reg_stat:
+        path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+      register: reg_keys_64
+
+    - name: Search 32-bit uninstall key (WOW6432Node)
+      win_reg_stat:
+        path: 'HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+      register: reg_keys_32
+
+    - name: Find ONLYOFFICE uninstall string from all keys
       win_shell: |
-        $key = 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
-        $subkeys = Get-ChildItem $key
-        foreach ($sub in $subkeys) {
-            $displayName = (Get-ItemProperty "$key\\$sub").DisplayName 2>$null
-            if ($displayName -like "*ONLYOFFICE*") {
-                return (Get-ItemProperty "$key\\$sub").UninstallString
-            }
+        $paths = @(
+          'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+          'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
+        )
+        foreach ($path in $paths) {
+          Get-ItemProperty $path | Where-Object { $_.DisplayName -like "ONLYOFFICE*" } | Select-Object -ExpandProperty UninstallString
         }
-      register: uninstall_string_result
+      register: uninstall_command
 
     - name: Set uninstall string variable
       set_fact:
-        onlyoffice_uninstall_cmd: "{{ uninstall_string_result.stdout | trim }}"
+        onlyoffice_uninstall: "{{ uninstall_command.stdout_lines[0] | regex_replace('\"$', '') | trim }}"
+      when: uninstall_command.stdout_lines | length > 0
 
     - name: Run uninstall command for ONLYOFFICE
-      win_shell: "{{ onlyoffice_uninstall_cmd }} /quiet"
-      when: onlyoffice_uninstall_cmd != ""
+      win_shell: "{{ onlyoffice_uninstall }} /quiet"
+      when: onlyoffice_uninstall is defined
+
+    - name: Remove ONLYOFFICE shortcuts from All Users desktop
+      win_file:
+        path: 'C:\Users\Public\Desktop\ONLYOFFICE.lnk'
+        state: absent
+
+    - name: Remove ONLYOFFICE shortcut from currently logged-in user's desktop
+      win_shell: |
+        $user = (Get-WmiObject -Class Win32_ComputerSystem).UserName.Split("\\")[-1]
+        $desktopPath = "C:\Users\$user\Desktop\ONLYOFFICE.lnk"
+        if (Test-Path $desktopPath) {
+            Remove-Item $desktopPath -Force
+        }
 
     - name: ✅ ONLYOFFICE successfully uninstalled
       debug:
