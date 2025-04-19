@@ -3,33 +3,42 @@
   gather_facts: yes
 
   tasks:
-    - name: Get ONLYOFFICE uninstall string from registry
+    - name: Search ONLYOFFICE uninstall string in registry
       win_reg_stat:
-        path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
         recursive: yes
       register: reg_info
 
-    - name: Set uninstall string variable
-      set_fact:
-        onlyoffice_uninstall_string: "{{ item.value['UninstallString'] }}"
-      when: "'ONLYOFFICE Desktop Editors' in item.value['DisplayName']"
-      with_items: "{{ reg_info.sub_keys | map('win_reg_stat', recursive=false) | list }}"
+    - name: Extract ONLYOFFICE uninstall string
+      win_reg_stat:
+        path: "{{ item }}"
+      register: uninstall_data
+      with_items: "{{ reg_info.sub_keys }}"
+      when: "'ONLYOFFICE Desktop Editors' in item"
       loop_control:
-        label: "{{ item.key }}"
-      register: uninstall_command
+        label: "{{ item }}"
+      ignore_errors: yes
 
-    - name: Run uninstall command for ONLYOFFICE
-      win_command: "{{ uninstall_command.results | selectattr('ansible_facts.onlyoffice_uninstall_string', 'defined') | map(attribute='ansible_facts.onlyoffice_uninstall_string') | first }} /quiet"
-      when: uninstall_command.results | selectattr('ansible_facts.onlyoffice_uninstall_string', 'defined') | list | length > 0
+    - name: Set uninstall command variable
+      set_fact:
+        onlyoffice_uninstall_cmd: "{{ item.value.UninstallString }}"
+      when: item.value.UninstallString is defined
+      with_items: "{{ uninstall_data.results }}"
+      register: uninstall_cmd_set
+
+    - name: Run ONLYOFFICE uninstall command
+      win_command: "{{ uninstall_cmd_set.results | selectattr('ansible_facts.onlyoffice_uninstall_cmd', 'defined') | map(attribute='ansible_facts.onlyoffice_uninstall_cmd') | first }} /quiet"
+      when: uninstall_cmd_set.results | selectattr('ansible_facts.onlyoffice_uninstall_cmd', 'defined') | list | length > 0
+
+    - name: Get currently logged-in username
+      win_shell: "(Get-WmiObject -Class Win32_ComputerSystem).UserName.Split('\\')[1]"
+      register: current_user
 
     - name: Remove ONLYOFFICE shortcut from current user desktop
-      win_shell: |
-        $user = (Get-WmiObject -Class Win32_ComputerSystem).UserName.Split('\\')[1]
-        $desktopPath = "C:\\Users\\$user\\Desktop\\ONLYOFFICE.lnk"
-        if (Test-Path $desktopPath) {
-            Remove-Item $desktopPath -Force
-        }
+      win_file:
+        path: "C:\\Users\\{{ current_user.stdout }}\\Desktop\\ONLYOFFICE.lnk"
+        state: absent
 
     - name: ✅ ONLYOFFICE successfully uninstalled
       debug:
-        msg: "✅ ONLYOFFICE Desktop Editors uninstalled successfully on {{ inventory_hostname }}"
+        msg: "✅ ONLYOFFICE Desktop Editors uninstalled and cleaned up on {{ inventory_hostname }}"
