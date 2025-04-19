@@ -1,4 +1,4 @@
-- name: Upgrade Windows 10 Pro to Windows 11 Pro using Installation Assistant
+- name: Upgrade Windows 10 Pro to Windows 11 Pro using Installation Assistant (via Task Scheduler)
   hosts: all
   gather_facts: no
   vars:
@@ -17,12 +17,14 @@
         dest: "{{ assistant_path }}"
         validate_certs: yes
 
-    - name: Run Windows 11 Installation Assistant (interactive upgrade)
+    - name: Create a scheduled task to launch the installer in interactive mode
       win_shell: |
-        Start-Process -FilePath "{{ assistant_path }}" -Verb RunAs
-      args:
-        executable: powershell.exe
+        schtasks /create /tn "Win11Upgrade" /tr "{{ assistant_path }}" /sc once /st 00:00 /rl highest /f
 
-    - name: ✅ Upgrade assistant launched — complete manually
+    - name: Run the scheduled task immediately
+      win_shell: |
+        schtasks /run /tn "Win11Upgrade"
+
+    - name: ✅ Task launched — user needs to complete upgrade
       debug:
-        msg: "✅ Windows 11 Installation Assistant has been launched. Please complete the upgrade on the remote system."
+        msg: "✅ Upgrade task scheduled and started. It will show up for the currently logged-in user."
