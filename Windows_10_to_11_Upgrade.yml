@@ -36,6 +36,9 @@
       args:
         executable: powershell.exe
 
-    - name: Notify user to complete upgrade
-      win_message:
-        msg: "🚀 Windows Update has been triggered. If your system is eligible, you’ll be offered Windows 11 soon."
+    - name: Show notification to user
+      win_shell: |
+        Add-Type -AssemblyName PresentationFramework
+        [System.Windows.MessageBox]::Show('🚀 Windows Update triggered. If this PC is eligible, Windows 11 will begin installing soon. Please check Windows Update settings.')
+      args:
+        executable: powershell.exe
