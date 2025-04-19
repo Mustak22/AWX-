@@ -3,36 +3,20 @@
   gather_facts: yes
   tasks:
 
-    - name: Get ONLYOFFICE uninstall string from registry
-      win_registry:
-        path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
-        name: DisplayName
-        data: 'ONLYOFFICE Desktop Editors'
-        state: read
-      register: office_keys
-      failed_when: false
-      ignore_errors: true
-
-    - name: Search 64-bit uninstall key
-      win_reg_stat:
-        path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
-      register: reg_keys_64
-
-    - name: Search 32-bit uninstall key (WOW6432Node)
-      win_reg_stat:
-        path: 'HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
-      register: reg_keys_32
-
-    - name: Find ONLYOFFICE uninstall string from all keys
+    - name: Get ONLYOFFICE uninstall string from registry (32-bit + 64-bit)
       win_shell: |
         $paths = @(
           'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
           'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
         )
         foreach ($path in $paths) {
-          Get-ItemProperty $path | Where-Object { $_.DisplayName -like "ONLYOFFICE*" } | Select-Object -ExpandProperty UninstallString
+          $apps = Get-ItemProperty $path | Where-Object { $_.DisplayName -like "ONLYOFFICE*" }
+          if ($apps) {
+            return $apps.UninstallString
+          }
         }
       register: uninstall_command
+      failed_when: uninstall_command.rc != 0 and uninstall_command.stdout_lines | length == 0
 
     - name: Set uninstall string variable
       set_fact:
@@ -43,12 +27,12 @@
       win_shell: "{{ onlyoffice_uninstall }} /quiet"
       when: onlyoffice_uninstall is defined
 
-    - name: Remove ONLYOFFICE shortcuts from All Users desktop
+    - name: Remove ONLYOFFICE shortcut from Public Desktop
       win_file:
         path: 'C:\Users\Public\Desktop\ONLYOFFICE.lnk'
         state: absent
 
-    - name: Remove ONLYOFFICE shortcut from currently logged-in user's desktop
+    - name: Remove ONLYOFFICE shortcut from current user desktop
       win_shell: |
         $user = (Get-WmiObject -Class Win32_ComputerSystem).UserName.Split("\\")[-1]
         $desktopPath = "C:\Users\$user\Desktop\ONLYOFFICE.lnk"
