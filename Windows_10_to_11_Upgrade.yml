@@ -1,30 +1,41 @@
-- name: Upgrade Windows 10 Pro to Windows 11 Pro using Installation Assistant (via Task Scheduler)
+- name: Trigger Windows 11 upgrade via Windows Update
   hosts: all
   gather_facts: no
-  vars:
-    assistant_url: "https://go.microsoft.com/fwlink/?linkid=2171764"
-    assistant_path: "C:\\Temp\\Windows11InstallationAssistant.exe"
-
   tasks:
-    - name: Ensure Temp directory exists
-      win_file:
-        path: "C:\\Temp"
-        state: directory
 
-    - name: Download Windows 11 Installation Assistant
-      win_get_url:
-        url: "{{ assistant_url }}"
-        dest: "{{ assistant_path }}"
-        validate_certs: yes
+    - name: Enable telemetry and diagnostic data (helps get Windows 11 offer)
+      win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection
+        name: AllowTelemetry
+        data: 3
+        type: dword
 
-    - name: Create a scheduled task to launch the installer in interactive mode
+    - name: Allow upgrade to Windows 11 via TargetReleaseVersion
+      win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate
+        name: TargetReleaseVersion
+        data: 1
+        type: dword
+
+    - name: Set TargetReleaseVersionInfo to Windows 11
+      win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate
+        name: TargetReleaseVersionInfo
+        data: "Windows 11"
+        type: string
+
+    - name: Force Windows Update to scan for updates
       win_shell: |
-        schtasks /create /tn "Win11Upgrade" /tr "{{ assistant_path }}" /sc once /st 00:00 /rl highest /f
+        UsoClient StartScan
+      args:
+        executable: powershell.exe
 
-    - name: Run the scheduled task immediately
+    - name: Start download and install if update available
       win_shell: |
-        schtasks /run /tn "Win11Upgrade"
+        UsoClient StartDownload; UsoClient StartInstall
+      args:
+        executable: powershell.exe
 
-    - name: ✅ Task launched — user needs to complete upgrade
-      debug:
-        msg: "✅ Upgrade task scheduled and started. It will show up for the currently logged-in user."
+    - name: Notify user to complete upgrade
+      win_message:
+        msg: "🚀 Windows Update has been triggered. If your system is eligible, you’ll be offered Windows 11 soon."
