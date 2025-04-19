@@ -1,10 +1,6 @@
 - name: Install ONLYOFFICE Desktop Editors on Windows
   hosts: all
-  gather_facts: false
-
-  vars:
-    installer_url: "https://download.onlyoffice.com/install/desktop/editors/windows/OnlyOfficeDesktopEditors_x64.exe"
-    installer_path: "C:\\Temp\\OnlyOfficeDesktopEditors_x64.exe"
+  gather_facts: yes
 
   tasks:
     - name: Ensure Temp directory exists
@@ -14,16 +10,13 @@
 
     - name: Download ONLYOFFICE installer
       win_get_url:
-        url: "{{ installer_url }}"
-        dest: "{{ installer_path }}"
+        url: "https://download.onlyoffice.com/install/desktop/editors/windows/distrib/onlyoffice/DesktopEditors_x64.exe"
+        dest: "C:\\Temp\\OnlyOfficeDesktopEditors_x64.exe"
 
-    - name: Run the ONLYOFFICE installer silently
-      win_package:
-        path: "{{ installer_path }}"
-        arguments: "/quiet"
-        product_id: 'ONLYOFFICE Desktop Editors'
-        state: present
+    - name: Install ONLYOFFICE
+      win_command: "C:\\Temp\\OnlyOfficeDesktopEditors_x64.exe /silent"
 
-    - name: ✅ ONLYOFFICE installed successfully
-      debug:
-        msg: "✅ ONLYOFFICE Desktop Editors has been installed on the system."
+    - name: Cleanup installer
+      win_file:
+        path: "C:\\Temp\\OnlyOfficeDesktopEditors_x64.exe"
+        state: absent
