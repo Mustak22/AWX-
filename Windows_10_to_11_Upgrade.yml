@@ -1,21 +1,28 @@
-- name: Upgrade Windows 10 Pro to Windows 11 Pro (Safe and Non-destructive)
+- name: Upgrade Windows 10 Pro to Windows 11 Pro using Installation Assistant
   hosts: all
   gather_facts: no
   vars:
-    upgrade_url: "https://go.microsoft.com/fwlink/?linkid=2171764"
-    upgrade_path: "C:\\Temp\\Windows11Upgrade.exe"
+    assistant_url: "https://go.microsoft.com/fwlink/?linkid=2171764"
+    assistant_path: "C:\\Temp\\Windows11InstallationAssistant.exe"
 
   tasks:
-    - name: Ensure Temp folder exists
+    - name: Ensure Temp directory exists
       win_file:
         path: "C:\\Temp"
         state: directory
 
     - name: Download Windows 11 Installation Assistant
       win_get_url:
-        url: "{{ upgrade_url }}"
-        dest: "{{ upgrade_path }}"
+        url: "{{ assistant_url }}"
+        dest: "{{ assistant_path }}"
         validate_certs: yes
 
-    - name: Launch Windows 11 Installation Assistant
-      win_command: "{{ upgrade_path }}"
+    - name: Run Windows 11 Installation Assistant
+      win_shell: |
+        Start-Process -FilePath "{{ assistant_path }}" -ArgumentList "" -Verb RunAs
+      args:
+        executable: powershell.exe
+
+    - name: ✅ Windows 11 installation started. Please follow prompts on the target machine.
+      debug:
+        msg: "✅ Windows 11 upgrade has been initiated. User interaction may be required on the target machine."
