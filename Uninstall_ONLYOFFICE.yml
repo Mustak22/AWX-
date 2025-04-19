@@ -1,41 +1,31 @@
 - name: Uninstall ONLYOFFICE Desktop Editors on Windows
   hosts: all
   gather_facts: yes
-  tasks:
 
-    - name: Get ONLYOFFICE uninstall string from registry (32-bit + 64-bit)
-      win_shell: |
-        $paths = @(
-          'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
-          'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
-        )
-        foreach ($path in $paths) {
-          $apps = Get-ItemProperty $path | Where-Object { $_.DisplayName -like "ONLYOFFICE*" }
-          if ($apps) {
-            return $apps.UninstallString
-          }
-        }
-      register: uninstall_command
-      failed_when: uninstall_command.rc != 0 and uninstall_command.stdout_lines | length == 0
+  tasks:
+    - name: Get ONLYOFFICE uninstall string from registry
+      win_reg_stat:
+        path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+        recursive: yes
+      register: reg_info
 
     - name: Set uninstall string variable
       set_fact:
-        onlyoffice_uninstall: "{{ uninstall_command.stdout_lines[0] | regex_replace('\"$', '') | trim }}"
-      when: uninstall_command.stdout_lines | length > 0
+        onlyoffice_uninstall_string: "{{ item.value['UninstallString'] }}"
+      when: "'ONLYOFFICE Desktop Editors' in item.value['DisplayName']"
+      with_items: "{{ reg_info.sub_keys | map('win_reg_stat', recursive=false) | list }}"
+      loop_control:
+        label: "{{ item.key }}"
+      register: uninstall_command
 
     - name: Run uninstall command for ONLYOFFICE
-      win_shell: "{{ onlyoffice_uninstall }} /quiet"
-      when: onlyoffice_uninstall is defined
-
-    - name: Remove ONLYOFFICE shortcut from Public Desktop
-      win_file:
-        path: 'C:\Users\Public\Desktop\ONLYOFFICE.lnk'
-        state: absent
+      win_command: "{{ uninstall_command.results | selectattr('ansible_facts.onlyoffice_uninstall_string', 'defined') | map(attribute='ansible_facts.onlyoffice_uninstall_string') | first }} /quiet"
+      when: uninstall_command.results | selectattr('ansible_facts.onlyoffice_uninstall_string', 'defined') | list | length > 0
 
     - name: Remove ONLYOFFICE shortcut from current user desktop
       win_shell: |
-        $user = (Get-WmiObject -Class Win32_ComputerSystem).UserName.Split("\\")[-1]
-        $desktopPath = "C:\Users\$user\Desktop\ONLYOFFICE.lnk"
+        $user = (Get-WmiObject -Class Win32_ComputerSystem).UserName.Split('\\')[-1]
+        $desktopPath = "C:\\Users\\$user\\Desktop\\ONLYOFFICE.lnk"
         if (Test-Path $desktopPath) {
             Remove-Item $desktopPath -Force
         }
