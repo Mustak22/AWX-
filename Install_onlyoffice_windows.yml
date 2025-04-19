@@ -1,5 +1,5 @@
 - name: Install ONLYOFFICE Desktop Editors on Windows
-  hosts: windows
+  hosts: all
   gather_facts: false
 
   vars:
