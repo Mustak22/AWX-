@@ -24,7 +24,7 @@
 
     - name: Remove ONLYOFFICE shortcut from current user desktop
       win_shell: |
-        $user = (Get-WmiObject -Class Win32_ComputerSystem).UserName.Split('\\')[-1]
+        $user = (Get-WmiObject -Class Win32_ComputerSystem).UserName.Split('\\')[1]
         $desktopPath = "C:\\Users\\$user\\Desktop\\ONLYOFFICE.lnk"
         if (Test-Path $desktopPath) {
             Remove-Item $desktopPath -Force
