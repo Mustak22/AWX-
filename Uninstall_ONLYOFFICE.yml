@@ -1,0 +1,28 @@
+- name: Uninstall ONLYOFFICE Desktop Editors on Windows
+  hosts: all
+  gather_facts: yes
+
+  tasks:
+    - name: Get ONLYOFFICE uninstall string from registry
+      win_shell: |
+        $key = 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
+        $subkeys = Get-ChildItem $key
+        foreach ($sub in $subkeys) {
+            $displayName = (Get-ItemProperty "$key\\$sub").DisplayName 2>$null
+            if ($displayName -like "*ONLYOFFICE*") {
+                return (Get-ItemProperty "$key\\$sub").UninstallString
+            }
+        }
+      register: uninstall_string_result
+
+    - name: Set uninstall string variable
+      set_fact:
+        onlyoffice_uninstall_cmd: "{{ uninstall_string_result.stdout | trim }}"
+
+    - name: Run uninstall command for ONLYOFFICE
+      win_shell: "{{ onlyoffice_uninstall_cmd }} /quiet"
+      when: onlyoffice_uninstall_cmd != ""
+
+    - name: ✅ ONLYOFFICE successfully uninstalled
+      debug:
+        msg: "✅ ONLYOFFICE Desktop Editors uninstalled successfully on {{ inventory_hostname }}"
