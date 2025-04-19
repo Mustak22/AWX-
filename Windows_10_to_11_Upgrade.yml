@@ -3,6 +3,8 @@
   gather_facts: yes
   vars:
     upgrade_script_path: "C:\\Temp\\Win11_Upgrade.ps1"
+    installer_path: "C:\\Temp\\Windows11InstallationAssistant.exe"
+    installer_url: "https://go.microsoft.com/fwlink/?linkid=2171764"
 
   tasks:
 
@@ -12,14 +14,18 @@
         state: directory
 
     - name: Get currently logged-in username only
-      win_shell: |
-        $user = (Get-WmiObject -Class Win32_ComputerSystem).UserName
-        $user.Split("\\\\")[-1]
+      win_shell: "(Get-WmiObject -Class Win32_ComputerSystem).UserName.Split('\\\\')[-1]"
       register: user_raw
 
     - name: Set logged_in_user variable
       set_fact:
         logged_in_user: "{{ user_raw.stdout | trim }}"
+
+    - name: Download Windows 11 Installation Assistant
+      win_get_url:
+        url: "{{ installer_url }}"
+        dest: "{{ installer_path }}"
+        force: no
 
     - name: Create PowerShell script to popup and run installer
       win_copy:
@@ -27,7 +33,7 @@
         content: |
           Add-Type -AssemblyName PresentationFramework
           [System.Windows.MessageBox]::Show('Windows 11 upgrade will now begin. Please follow the steps.', 'Windows Upgrade')
-          Start-Process "C:\\Temp\\Windows11InstallationAssistant.exe"
+          Start-Process "{{ installer_path }}"
 
     - name: Create scheduled task to show popup for logged-in user
       win_scheduled_task:
@@ -43,11 +49,10 @@
         trigger:
           - type: once
             start_boundary: "{{ ansible_date_time.iso8601 }}"
-      register: upgrade_task
 
     - name: Run the scheduled task
       win_command: schtasks /run /tn "Win11UpgradePopup"
 
     - name: ✅ Popup and installer launched — follow steps manually
       debug:
-        msg: "✅ Popup and upgrade started for {{ logged_in_user }}. Please complete the upgrade manually on the remote system."
+        msg: "✅ Windows 11 Installation Assistant launched for {{ logged_in_user }}. Complete the upgrade manually."
