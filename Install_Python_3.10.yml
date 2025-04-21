@@ -1,0 +1,40 @@
+---
+- name: Bootstrap Python 3.10 on Ubuntu 24.04
+  hosts: 192.168.5.18  # Your Ubuntu host
+  become: true  # Ensure the play runs as sudo (root)
+  tasks:
+    - name: Install dependencies for Python 3.10
+      apt:
+        name:
+          - software-properties-common
+          - build-essential
+          - libssl-dev
+          - zlib1g-dev
+          - libbz2-dev
+          - libreadline-dev
+          - libsqlite3-dev
+          - wget
+          - curl
+          - llvm
+          - libncurses5-dev
+          - libncursesw5-dev
+          - xz-utils
+          - tk-dev
+          - libffi-dev
+          - liblzma-dev
+          - python3-openssl
+        state: present
+        update_cache: yes
+
+    - name: Add deadsnakes PPA for Python 3.10
+      apt:
+        name: python3.10
+        state: present
+
+    - name: Set Python 3.10 as default Python
+      alternatives:
+        name: python
+        link: /usr/bin/python
+        path: /usr/bin/python3.10
+        priority: 10
+        state: present
