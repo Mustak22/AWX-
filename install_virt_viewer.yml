@@ -19,8 +19,7 @@
         state: present
         name: Path
         value: C:\ProgramData\chocolatey\bin
-        separator: ';'
-        scope: machine
+        level: machine  # Use 'level' instead of 'scope'
 
     - name: Install virt-viewer using Chocolatey
       win_chocolatey:
