@@ -1,0 +1,28 @@
+---
+- name: Install Chocolatey and Virt-Viewer on Windows
+  hosts: windows
+  gather_facts: no
+  tasks:
+
+    - name: Ensure Chocolatey is installed
+      win_command: |
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (!(Test-Path -Path 'C:\ProgramData\chocolatey')) {
+          Set-ExecutionPolicy Bypass -Scope Process -Force;
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'));
+        }"
+      args:
+        creates: C:\ProgramData\chocolatey\bin\choco.exe
+
+    - name: Add Chocolatey bin to system path if not present
+      win_environment:
+        state: present
+        name: Path
+        value: C:\ProgramData\chocolatey\bin
+        separator: ';'
+        scope: machine
+
+    - name: Install virt-viewer using Chocolatey
+      win_chocolatey:
+        name: virt-viewer
+        state: present
