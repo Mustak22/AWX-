@@ -1,6 +1,6 @@
 ---
 - name: Install Chocolatey and Virt-Viewer on Windows
-  hosts: windows
+  hosts: all
   gather_facts: no
   tasks:
 
