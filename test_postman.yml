@@ -1,37 +1,27 @@
 ---
-- name: Install Postman for current Windows user
+- name: Install Postman and create shortcut
   hosts: windows_hosts
   connection: ssh
   gather_facts: false
 
   tasks:
-    - name: Get current logged-in username (PowerShell)
+    - name: Full installation and shortcut creation
       raw: |
-        $currentUser = (Get-WmiObject -Class Win32_ComputerSystem).Username
-        $currentUser = $currentUser.Split('\\')[-1]  # Escaped backslash
-        Write-Output "CURRENT_USER=$currentUser"
-      register: current_user
-      changed_when: false
-
-    - name: Extract username
-      set_fact:
-        logged_in_user: "{{ (current_user.stdout | regex_search('CURRENT_USER=(.*)')).groups()[0] }}"
-
-    - name: Download and install Postman silently
-      raw: |
-        $url = "https://dl.pstmn.io/download/latest/win64"
-        $output = "$env:TEMP\Postman.exe"
+        powershell -command "
+        # Install Postman
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $url = 'https://dl.pstmn.io/download/latest/win64'
+        $output = \"$env:TEMP\\Postman.exe\"
         Invoke-WebRequest -Uri $url -OutFile $output
-        Start-Process -Wait -FilePath $output -ArgumentList "/S"
+        Start-Process -Wait -FilePath $output -ArgumentList '/S'
         Remove-Item $output -Force
 
-    - name: Create desktop shortcut for current user
-      raw: |
-        $desktop = [System.Environment]::GetFolderPath("Desktop")
-        $shortcut = "$desktop\Postman.lnk"
-        $target = "$env:LOCALAPPDATA\Postman\Postman.exe"
+        # Create shortcut
+        $desktop = [System.Environment]::GetFolderPath('Desktop')
+        $shortcut = \"$desktop\\Postman.lnk\"
+        $target = \"$env:LOCALAPPDATA\\Postman\\Postman.exe\"
         $wshell = New-Object -ComObject WScript.Shell
         $sc = $wshell.CreateShortcut($shortcut)
         $sc.TargetPath = $target
         $sc.Save()
+        "
