@@ -1,6 +1,6 @@
 ---
 - name: Install Postman and create shortcut
-  hosts: windows_hosts
+  hosts: all
   connection: ssh
   gather_facts: false
 
