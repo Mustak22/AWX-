@@ -1,0 +1,37 @@
+---
+- name: Install Postman for the current user
+  hosts: windows_hosts
+  connection: ssh
+  gather_facts: false  # Disable if not using WinRM
+
+  tasks:
+    - name: Get the current logged-in username
+      raw: |
+        $currentUser = (Get-WmiObject -Class Win32_ComputerSystem).Username
+        $currentUser = $currentUser.Split('\')[-1]  # Extract username (if DOMAIN\user)
+        Write-Output "CURRENT_USER=$currentUser"
+      register: current_user
+      changed_when: false
+
+    - name: Extract the username from output
+      set_fact:
+        logged_in_user: "{{ (current_user.stdout | regex_search('CURRENT_USER=(.*)')).groups()[0] }}"
+
+    - name: Download Postman (Silent Installer)
+      raw: |
+        $url = "https://dl.pstmn.io/download/latest/win64"
+        $output = "$env:TEMP\Postman-win64.exe"
+        Invoke-WebRequest -Uri $url -OutFile $output
+        Start-Process -Wait -FilePath $output -ArgumentList "/S"  # Silent install
+        Remove-Item $output -Force
+
+    - name: Create desktop shortcut for the current user
+      raw: |
+        $desktopPath = [System.Environment]::GetFolderPath("Desktop")
+        $shortcutPath = "$desktopPath\Postman.lnk"
+        $targetPath = "$env:LOCALAPPDATA\Postman\Postman.exe"
+
+        $WshShell = New-Object -ComObject WScript.Shell
+        $Shortcut = $WshShell.CreateShortcut($shortcutPath)
+        $Shortcut.TargetPath = $targetPath
+        $Shortcut.Save()
