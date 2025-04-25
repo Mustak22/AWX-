@@ -1,29 +1,28 @@
 ---
-- name: Ensure 'tree' is installed on CentOS and Ubuntu
+- name: Ensure "tree" is installed if missing
   hosts: all
   become: yes
-  gather_facts: yes
-
   tasks:
+
     - name: Check if 'tree' is already installed
-      command: which tree
+      shell: command -v tree
       register: tree_check
       changed_when: false
       failed_when: false
 
-    - name: Install 'tree' on Ubuntu
+    - name: Install tree on Ubuntu
       apt:
         name: tree
         state: present
         update_cache: yes
       when:
-        - ansible_facts['os_family'] == "Debian"
         - tree_check.rc != 0
+        - ansible_facts['os_family'] == "Debian"
 
-    - name: Install 'tree' on CentOS
+    - name: Install tree on CentOS
       yum:
         name: tree
         state: present
       when:
-        - ansible_facts['os_family'] == "RedHat"
         - tree_check.rc != 0
+        - ansible_facts['os_family'] == "RedHat"
