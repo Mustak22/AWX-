@@ -1,0 +1,14 @@
+---
+- name: Shut down all Ubuntu and CentOS machines
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  tasks:
+    - name: Shutdown Ubuntu systems
+      when: ansible_facts['os_family'] == "Debian"
+      ansible.builtin.command: shutdown -h now
+
+    - name: Shutdown CentOS systems
+      when: ansible_facts['os_family'] == "RedHat"
+      ansible.builtin.command: shutdown -h now
