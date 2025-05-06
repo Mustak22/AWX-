@@ -1,0 +1,11 @@
+---
+- name: Show popup on Windows systems
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Show popup to the currently logged-in user
+      win_shell: |
+        $message = "I am monitoring you"
+        $title = "Monitoring Alert"
+        $wshell = New-Object -ComObject WScript.Shell
+        $wshell.Popup($message, 0, $title, 0x0)
