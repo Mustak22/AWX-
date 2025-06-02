@@ -1,36 +1,67 @@
+
 ---
-- name: Check Java Services on Remote Host
-  hosts: transit_server
+- name: Check and start Java services if not running
+  hosts: 192.168.0.180
   become: true
+  vars:
+    java_services:
+      - name: config-server
+        jar: config-server-0.0.1-SNAPSHOT.jar
+        path: /home/afcs-microservices/config-server
+      - name: eureka-server
+        jar: eureka-server-1.0.0.jar
+        path: /home/afcs-microservices/eureka
+      - name: zuul
+        jar: zuul-0.0.1-SNAPSHOT.jar
+        path: /home/afcs-microservices/zuul
+      - name: core-service
+        jar: core-service-0.0.1-SNAPSHOT.jar
+        path: /home/afcs-microservices/core-service
+      - name: inventory-service
+        jar: inventory-service-0.0.1-SNAPSHOT.jar
+        path: /home/afcs-microservices/inventory-service
+      - name: transaction-service
+        jar: transaction-service-0.0.1-SNAPSHOT.jar
+        path: /home/afcs-microservices/transaction-service
+      - name: transit-web
+        jar: transit-web.war
+        path: /home/afcs-microservices/transit-web
+      - name: user-service
+        jar: user-service-0.0.1-SNAPSHOT.jar
+        path: /home/afcs-microservices/user-service
+
   tasks:
-    - name: Check if Eureka Server is running
-      shell: pgrep -f eureka-server
-      register: eureka_status
-      ignore_errors: true
 
-    - name: Report Eureka Server Status
+    - name: Check if each Java service is running
+      shell: "pgrep -f {{ item.jar }}"
+      register: java_service_status
+      ignore_errors: true
+      loop: "{{ java_services }}"
+      loop_control:
+        label: "{{ item.name }}"
+      vars:
+        ansible_loop_var: item
+      changed_when: false
+
+    - name: Combine service info with status
+      set_fact:
+        service_status_combined: "{{ service_status_combined | default([]) + [ item | combine({ 'rc': item_result.rc }) ] }}"
+      loop: "{{ java_services | zip(java_service_status.results) | list }}"
+      loop_control:
+        label: "{{ item.0.name }}"
+      vars:
+        item: "{{ item.0 }}"
+        item_result: "{{ item.1 }}"
+
+    - name: Start Java services that are not running
+      shell: "nohup java -jar {{ item.path }}/{{ item.jar }} > /var/log/{{ item.name }}.log 2>&1 &"
+      when: item.rc != 0
+      loop: "{{ service_status_combined }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Show final status of all Java services
       debug:
         msg: >-
-          {{ '✅ Eureka Server is running.' if eureka_status.rc == 0 else '❌ Eureka Server is NOT running.' }}
-
-    - name: Check if Zuul Gateway is running
-      shell: pgrep -f zuul
-      register: zuul_status
-      ignore_errors: true
-
-    - name: Report Zuul Gateway Status
-      debug:
-        msg: >-
-          {{ '✅ Zuul Gateway is running.' if zuul_status.rc == 0 else '❌ Zuul Gateway is NOT running.' }}
-
-    - name: Check if Config Server is running
-      shell: pgrep -f config-server
-      register: config_status
-      ignore_errors: true
-
-    - name: Report Config Server Status
-      debug:
-        msg: >-
-          {{ '✅ Config Server is running.' if config_status.rc == 0 else '❌ Config Server is NOT running.' }}
-
-    # Add more services as needed following the same pattern
+          {{ item.name }}: {{ '✅ RUNNING (already or restarted)' if item.rc == 0 else '🔄 RESTARTED (was down)' }}
+      loop: "{{ service_status_combined }}"
