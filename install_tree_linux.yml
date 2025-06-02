@@ -1,6 +1,6 @@
 ---
 - name: Check and start Java services if not running
-  hosts: transit_server
+  hosts: 192.168.0.180
   become: true
   vars:
     java_services:
