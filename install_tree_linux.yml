@@ -1,28 +1,36 @@
 ---
-- name: Ensure "tree" is installed if missing
-  hosts: all
-  become: yes
+- name: Check Java Services on Remote Host
+  hosts: transit_server
+  become: true
   tasks:
+    - name: Check if Eureka Server is running
+      shell: pgrep -f eureka-server
+      register: eureka_status
+      ignore_errors: true
 
-    - name: Check if 'tree' is already installed
-      shell: command -v tree
-      register: tree_check
-      changed_when: false
-      failed_when: false
+    - name: Report Eureka Server Status
+      debug:
+        msg: >-
+          {{ '✅ Eureka Server is running.' if eureka_status.rc == 0 else '❌ Eureka Server is NOT running.' }}
 
-    - name: Install tree on Ubuntu
-      apt:
-        name: tree
-        state: present
-        update_cache: yes
-      when:
-        - tree_check.rc != 0
-        - ansible_facts['os_family'] == "Debian"
+    - name: Check if Zuul Gateway is running
+      shell: pgrep -f zuul
+      register: zuul_status
+      ignore_errors: true
 
-    - name: Install tree on CentOS
-      yum:
-        name: tree
-        state: present
-      when:
-        - tree_check.rc != 0
-        - ansible_facts['os_family'] == "RedHat"
+    - name: Report Zuul Gateway Status
+      debug:
+        msg: >-
+          {{ '✅ Zuul Gateway is running.' if zuul_status.rc == 0 else '❌ Zuul Gateway is NOT running.' }}
+
+    - name: Check if Config Server is running
+      shell: pgrep -f config-server
+      register: config_status
+      ignore_errors: true
+
+    - name: Report Config Server Status
+      debug:
+        msg: >-
+          {{ '✅ Config Server is running.' if config_status.rc == 0 else '❌ Config Server is NOT running.' }}
+
+    # Add more services as needed following the same pattern
