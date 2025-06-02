@@ -1,6 +1,6 @@
 ---
 - name: Check Java Services on Remote Host
-  hosts: transit_server
+  hosts: 192.168.0.180
   become: true
   tasks:
     - name: Check if Eureka Server is running
